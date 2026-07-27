@@ -211,7 +211,8 @@
       <option value="8 6">Szaggatott</option>
       <option value="2 5">Pontozott</option>
     </select>
-    <button class="tbtn on" id="orthoBtn" title="Derékszögű vezetés ki/be">90°</button>
+    <button class="tbtn on" id="routeBtn" title="Automatikus útvonal: két csonkra kattintva magától kirajzolja a vezetéket">⚡ Auto</button>
+    <button class="tbtn on" id="orthoBtn" title="Derékszögű vezetés ki/be (kézi módban)">90°</button>
   </div>
 
   <div class="tgroup" role="group" aria-label="Szerkesztés">
@@ -289,10 +290,11 @@
     <p><b>Vezeték rajzolása:</b> válaszd a <b>Vezeték</b> eszközt (<kbd>L</kbd>), a színt
        (piros = fűtés előremenő, kék = visszatérő / hidegvíz, sárga = gáz, narancs = HMV)
        és a <b>csőtípust</b> – ebből számolja az anyaglista a méterárakat.
-       Kattintgatással törésponttól töréspontig rajzolsz; az elemek csonkjaira (kis körök)
-       a vezeték rátapad, és az elem mozgatásakor vele megy. A csonk fölé érve a lábléc mutatja
-       a gyári csonk nevét és méretét. Befejezés: a rajzlap alján megjelenő
-       <b>„✓ Vezeték kész”</b> gomb (mobilon is), vagy <b>dupla kattintás</b> / <kbd>Enter</kbd>.</p>
+       <b>⚡ Automata módban</b> (alapértelmezés) elég az egyik csonkra, majd a másikra
+       kattintani: a legjobb derékszögű útvonalat magától kirajzolja, kikerülve az elemeket.
+       A ⚡ gombbal <b>kézi módra</b> válthatsz: ott kattintgatással törésponttól töréspontig
+       rajzolsz, befejezés a <b>„✓ Vezeték kész”</b> gombbal (mobilon is), dupla kattintással
+       vagy <kbd>Enter</kbd>-rel. A csonk fölé érve a lábléc mutatja a gyári csonk nevét és méretét.</p>
     <p><b>Anyaglista:</b> az <b>≡ Anyaglista</b> gomb összegyűjti a lerakott berendezéseket,
        a vezetékek hosszát csőtípusonként (a lépték állítható), és <b>minden bekötött csonkhoz
        automatikusan elzáró csapot és a rákötött cső típusához illő indító idomot</b> számol
@@ -533,14 +535,14 @@ const SYMBOLS = {
     ports:[{x:0,y:22,n:'Szívóoldal',s:'6/4"',f:'futes'},{x:44,y:22,n:'Nyomóoldal',s:'6/4"',f:'futes'}],
     svg:'<circle cx="22" cy="22" r="20" '+S2F+'/>' +
         '<path d="M12 10 L38 22 L12 34 Z" '+S2+'/>' },
-  valtoszelep:{ name:'Váltószelep (3j)', cat:'Szerelvények', w:48, h:58, prod:'p_valtoszelep', valves:false,
+  valtoszelep:{ name:'Váltószelep (3j)', cat:'Szerelvények', w:48, h:58, prod:'p_valtoszelep', valves:true,
     ports:[{x:0,y:34,n:'AB csonk',s:'1"',f:'futes'},{x:48,y:34,n:'A csonk',s:'1"',f:'futes'},{x:24,y:58,n:'B csonk',s:'1"',f:'futes'}],
     svg:'<path d="M1 24 L24 34 L1 44 Z M47 24 L24 34 L47 44 Z" '+S2F+'/>' +
         '<path d="M14 47 L24 34 L34 47 Z" stroke="'+INK+'" stroke-width="2" fill="'+INK+'" transform="translate(0,10)"/>' +
         '<line x1="24" y1="34" x2="24" y2="16" '+S2+'/>' +
         '<rect x="14" y="1" width="20" height="15" '+S2F+'/>' +
         '<text x="24" y="12.5" font-size="11" '+TXT+'>M</text>' },
-  keveroszelep:{ name:'Keverőszelep (3j)', cat:'Szerelvények', w:48, h:58, prod:'p_kevero', valves:false,
+  keveroszelep:{ name:'Keverőszelep (3j)', cat:'Szerelvények', w:48, h:58, prod:'p_kevero', valves:true,
     ports:[{x:0,y:34,n:'A csonk',s:'1"',f:'futes'},{x:48,y:34,n:'AB csonk',s:'1"',f:'futes'},{x:24,y:58,n:'B csonk',s:'1"',f:'futes'}],
     svg:'<path d="M1 24 L24 34 L1 44 Z M47 24 L24 34 L47 44 Z M14 57 L24 34 L34 57 Z" '+S2F+'/>' +
         '<line x1="24" y1="34" x2="24" y2="16" '+S2+'/>' +
@@ -556,7 +558,7 @@ const SYMBOLS = {
     svg:bowtie(1,10,42,22) +
         '<line x1="22" y1="21" x2="22" y2="4" '+S2+'/>' +
         '<line x1="14" y1="4" x2="30" y2="4" '+S2+'/>' },
-  visszacsapo:{ name:'Visszacsapó szelep', cat:'Szerelvények', w:44, h:24, prod:null, valves:false,
+  visszacsapo:{ name:'Visszacsapó szelep', cat:'Szerelvények', w:44, h:24, prod:null, valves:true,
     ports:[{x:0,y:12,n:'Belépő',s:'3/4"',f:'futes'},{x:44,y:12,n:'Kilépő',s:'3/4"',f:'futes'}],
     svg:'<path d="M1 1 L22 12 L1 23 Z" '+S2F+'/>' +
         '<path d="M43 1 L22 12 L43 23 Z" stroke="'+INK+'" stroke-width="2" fill="'+INK+'"/>' },
@@ -565,18 +567,18 @@ const SYMBOLS = {
     svg:bowtie(1,23,42,22) +
         '<line x1="22" y1="34" x2="22" y2="18" '+S2+'/>' +
         '<path d="M14 18 l16 -4 l-16 -4 l16 -4" '+S2+'/>' },
-  szuro:{ name:'Szűrő (Y)', cat:'Szerelvények', w:44, h:34, prod:'p_szuro', valves:false,
+  szuro:{ name:'Szűrő (Y)', cat:'Szerelvények', w:44, h:34, prod:'p_szuro', valves:true,
     ports:[{x:0,y:8,n:'Belépő',s:'1"',f:'futes'},{x:44,y:8,n:'Kilépő',s:'1"',f:'futes'}],
     svg:'<line x1="0" y1="8" x2="44" y2="8" '+S2+'/>' +
         '<path d="M14 8 L26 30 L34 26" '+S2+'/>' +
         '<line x1="22" y1="21" x2="30" y2="17" stroke="'+INK+'" stroke-width="1.5"/>' },
-  iszaplevalaszto:{ name:'Iszapleválasztó', cat:'Szerelvények', w:44, h:44, prod:'p_iszap', valves:false,
+  iszaplevalaszto:{ name:'Iszapleválasztó', cat:'Szerelvények', w:44, h:44, prod:'p_iszap', valves:true,
     ports:[{x:0,y:10,n:'Belépő',s:'1"',f:'futes'},{x:44,y:10,n:'Kilépő',s:'1"',f:'futes'}],
     svg:'<line x1="0" y1="10" x2="44" y2="10" '+S2+'/>' +
         '<rect x="14" y="18" width="16" height="22" rx="4" '+S2F+'/>' +
         '<line x1="22" y1="10" x2="22" y2="18" '+S2+'/>' +
         '<line x1="18" y1="34" x2="26" y2="34" stroke="'+INK+'" stroke-width="1.5"/>' },
-  leglevalaszto:{ name:'Légleválasztó', cat:'Szerelvények', w:44, h:44, prod:'p_legle', valves:false,
+  leglevalaszto:{ name:'Légleválasztó', cat:'Szerelvények', w:44, h:44, prod:'p_legle', valves:true,
     ports:[{x:0,y:34,n:'Belépő',s:'1"',f:'futes'},{x:44,y:34,n:'Kilépő',s:'1"',f:'futes'}],
     svg:'<line x1="0" y1="34" x2="44" y2="34" '+S2+'/>' +
         '<rect x="14" y="4" width="16" height="22" rx="4" '+S2F+'/>' +
@@ -643,7 +645,7 @@ let mode = 'select';
 let placingType = null;
 let sel = null;
 let draw = null;
-let curColor = COLORS[0].c, ortho = true;
+let curColor = COLORS[0].c, ortho = true, routeAuto = true;
 let undoStack = [], redoStack = [];
 let mouse = {x:0, y:0};
 
@@ -688,6 +690,84 @@ function nearestPort(wx, wy){
       const d = Math.hypot(p.x-wx, p.y-wy);
       if(d < bd){ bd = d; best = {comp:c.id, port:i, x:p.x, y:p.y, def:s.ports[i], label:c.label}; }
     }
+  }
+  return best;
+}
+function portDirW(comp, i){
+  const s = SYMBOLS[comp.type], p = s.ports[i];
+  let d;
+  if(p.x <= 0) d = [-1,0];
+  else if(p.x >= s.w) d = [1,0];
+  else if(p.y <= 0) d = [0,-1];
+  else d = [0,1];
+  const steps = ((comp.rot||0)/90) % 4;
+  for(let k=0;k<steps;k++) d = [-d[1], d[0]];
+  return d;
+}
+/* ---- automatikus útvonalkeresés ---- */
+function compRectsInflated(excl){
+  const out = [];
+  for(const c of state.comps){
+    if(excl && excl.indexOf(c.id) !== -1) continue;
+    const s = SYMBOLS[c.type];
+    const cx = c.x+s.w/2, cy = c.y+s.h/2;
+    const rot = (c.rot||0) % 180;
+    const w = rot === 90 ? s.h : s.w, h = rot === 90 ? s.w : s.h;
+    out.push({x1:cx-w/2-8, y1:cy-h/2-8, x2:cx+w/2+8, y2:cy+h/2+8});
+  }
+  return out;
+}
+function segHits(a, b, rects){
+  let n = 0;
+  for(const r of rects){
+    if(Math.abs(a.x-b.x) < 0.5){
+      if(a.x > r.x1 && a.x < r.x2 &&
+         Math.max(Math.min(a.y,b.y), r.y1) < Math.min(Math.max(a.y,b.y), r.y2)) n++;
+    } else if(Math.abs(a.y-b.y) < 0.5){
+      if(a.y > r.y1 && a.y < r.y2 &&
+         Math.max(Math.min(a.x,b.x), r.x1) < Math.min(Math.max(a.x,b.x), r.x2)) n++;
+    }
+  }
+  return n;
+}
+function simplifyRoute(pts){
+  const out = [{x:pts[0].x, y:pts[0].y}];
+  for(let i=1;i<pts.length;i++){
+    const p = pts[i], l = out[out.length-1];
+    if(Math.abs(p.x-l.x) < 0.5 && Math.abs(p.y-l.y) < 0.5) continue;
+    out.push({x:p.x, y:p.y});
+  }
+  for(let i=out.length-2;i>0;i--){
+    const a = out[i-1], b = out[i], c = out[i+1];
+    if((Math.abs(a.x-b.x)<0.5 && Math.abs(b.x-c.x)<0.5) ||
+       (Math.abs(a.y-b.y)<0.5 && Math.abs(b.y-c.y)<0.5)) out.splice(i,1);
+  }
+  return out;
+}
+function bestRoute(p1, d1, p2, d2, excl){
+  const rects = compRectsInflated((excl||[]).filter(Boolean));
+  const cands = [];
+  for(const L of [20, 60]){
+    const s = d1 ? {x:p1.x+d1[0]*L, y:p1.y+d1[1]*L} : {x:p1.x, y:p1.y};
+    const g = d2 ? {x:p2.x+d2[0]*L, y:p2.y+d2[1]*L} : {x:p2.x, y:p2.y};
+    cands.push([p1, s, {x:g.x, y:s.y}, g, p2]);
+    cands.push([p1, s, {x:s.x, y:g.y}, g, p2]);
+    const xm = snap((s.x+g.x)/2), ym = snap((s.y+g.y)/2);
+    cands.push([p1, s, {x:xm, y:s.y}, {x:xm, y:g.y}, g, p2]);
+    cands.push([p1, s, {x:s.x, y:ym}, {x:g.x, y:ym}, g, p2]);
+  }
+  let best = null, bs = Infinity;
+  for(const raw of cands){
+    const c = simplifyRoute(raw);
+    let score = 0, len = 0;
+    for(let i=1;i<c.length;i++){
+      const a = c[i-1], b = c[i];
+      if(Math.abs(a.x-b.x) > 0.5 && Math.abs(a.y-b.y) > 0.5){ score += 1e6; }
+      len += Math.abs(a.x-b.x) + Math.abs(a.y-b.y);
+      score += segHits(a, b, rects) * 1000;
+    }
+    score += (c.length-2)*15 + len*0.2;
+    if(score < bs){ bs = score; best = c; }
   }
   return best;
 }
@@ -751,8 +831,19 @@ function renderOverlay(){
     m += compMarkup({type:placingType, x:snap(mouse.x-s.w/2), y:snap(mouse.y-s.h/2), rot:0, label:s.name}, true);
   }
   if(draw && draw.points.length){
-    const np = lineNextPoint(mouse.x, mouse.y);
-    const pts = draw.points.concat(np.pts).map(p=>p.x+','+p.y).join(' ');
+    let pts;
+    if(routeAuto && draw.dir1 !== undefined){
+      const port = nearestPort(mouse.x, mouse.y);
+      const tgt = port ? {x:port.x, y:port.y} : {x:snap(mouse.x), y:snap(mouse.y)};
+      const dir = port ? portDirW(state.comps.find(c=>c.id===port.comp), port.port) : null;
+      const p0 = draw.points[0];
+      const route = bestRoute({x:p0.x,y:p0.y}, draw.dir1, tgt, dir,
+        [p0.anchor && p0.anchor.comp, port && port.comp]);
+      pts = route.map(p=>p.x+','+p.y).join(' ');
+    } else {
+      const np = lineNextPoint(mouse.x, mouse.y);
+      pts = draw.points.concat(np.pts).map(p=>p.x+','+p.y).join(' ');
+    }
     m += '<polyline points="'+pts+'" '+lineAttrs(draw)+' opacity="0.8"/>';
   }
   if(mode==='line'){
@@ -835,7 +926,9 @@ function setMode(m){
 function setHint(t){
   const def = {
     select:'Húzd az elemeket; üres területet húzva mozgatod a nézetet. Dupla katt: átnevezés.',
-    line:'Kattintgatva rajzolj; a csonkokra (kis körök) rátapad a vezeték. Befejezés: dupla katt vagy Enter, mégse: Esc.',
+    line: routeAuto
+      ? 'Automata útvonal: kattints az első csonkra, majd a másodikra – a vezetéket magától kirajzolja. A ⚡ gombbal kézi rajzolásra válthatsz.'
+      : 'Kézi rajzolás: kattintgatva rajzolj; a csonkokra (kis körök) rátapad a vezeték. Befejezés: dupla katt vagy Enter, mégse: Esc.',
     text:'Kattints a rajzlapra a szöveg helyének kijelöléséhez.',
     place:'Kattints a rajzlapra az elem lerakásához. Shift = több példány, Esc = mégse.'
   };
@@ -863,6 +956,26 @@ svg.addEventListener('pointerdown', e => {
     return;
   }
   if(mode === 'line'){
+    if(routeAuto){
+      const port = nearestPort(w.x, w.y);
+      const pt = port ? {x:port.x, y:port.y, anchor:{comp:port.comp, port:port.port}}
+                      : {x:snap(w.x), y:snap(w.y), anchor:null};
+      const dir = port ? portDirW(state.comps.find(c=>c.id===port.comp), port.port) : null;
+      if(!draw){
+        draw = { color:curColor, width:+$('lineWidth').value, dash:$('lineDash').value,
+                 pipe:$('pipeSel').value, points:[pt], dir1:dir };
+      } else {
+        const p0 = draw.points[0];
+        if(Math.hypot(pt.x-p0.x, pt.y-p0.y) < 5){ renderOverlay(); return; }
+        const route = bestRoute({x:p0.x,y:p0.y}, draw.dir1, {x:pt.x,y:pt.y}, dir,
+          [p0.anchor && p0.anchor.comp, pt.anchor && pt.anchor.comp]);
+        draw.points = route.map((p,i) => ({x:p.x, y:p.y,
+          anchor: i===0 ? p0.anchor : (i===route.length-1 ? pt.anchor : null)}));
+        delete draw.dir1;
+        finishLine();
+      }
+      renderOverlay(); return;
+    }
     const np = lineNextPoint(w.x, w.y);
     if(!draw){
       draw = { color:curColor, width:+$('lineWidth').value, dash:$('lineDash').value,
@@ -1296,6 +1409,12 @@ $('drawCancel').onclick = () => {
   else setMode('select');
 };
 $('orthoBtn').onclick = () => { ortho = !ortho; $('orthoBtn').classList.toggle('on', ortho); };
+$('routeBtn').onclick = () => {
+  routeAuto = !routeAuto;
+  $('routeBtn').classList.toggle('on', routeAuto);
+  if(draw){ draw = null; renderOverlay(); }
+  setHint();
+};
 $('rotBtn').onclick = rotateSel;
 $('dupBtn').onclick = dupSel;
 $('delBtn').onclick = deleteSel;
