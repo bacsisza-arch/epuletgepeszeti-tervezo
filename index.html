@@ -1177,24 +1177,37 @@ function computeBOM(){
     const r = fitRows.get(name) || {name, qty:0, unit:'darab', price, uncat:false};
     r.qty++; fitRows.set(name, r);
   };
-  // melyik csonkra milyen cső csatlakozik
-  const portPipe = {};
-  for(const l of state.lines){
-    const pk = PIPES[l.pipe] ? l.pipe : 'otreteg20';
-    for(const p of l.points)
-      if(p.anchor){
-        const k = p.anchor.comp+':'+p.anchor.port;
-        if(!(k in portPipe)) portPipe[k] = pk;
+  // Bekötött csonkok felismerése: horgonyzott végpont VAGY a csonkon
+  // átmenő / oda érő vezeték (geometriai egyezés) is kapcsolatnak számít.
+  const distPtSeg = (px, py, a, b) => {
+    const dx = b.x-a.x, dy = b.y-a.y;
+    const len2 = dx*dx + dy*dy;
+    let t = len2 ? ((px-a.x)*dx + (py-a.y)*dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (a.x + t*dx), py - (a.y + t*dy));
+  };
+  const portConn = (c, idx) => {
+    const w = portWorld(c, idx);
+    for(const l of state.lines){
+      for(const p of l.points){
+        if(p.anchor && p.anchor.comp === c.id && p.anchor.port === idx) return l;
+        if(Math.hypot(p.x-w.x, p.y-w.y) < 8) return l;
       }
-  }
+      for(let i=1;i<l.points.length;i++)
+        if(distPtSeg(w.x, w.y, l.points[i-1], l.points[i]) < 6) return l;
+    }
+    return null;
+  };
   let missingValve = 0;
   for(const c of state.comps){
     const s = SYMBOLS[c.type];
     if(!s || !s.valves) continue;
-    const connected = new Set();
-    for(const l of state.lines) for(const p of l.points)
-      if(p.anchor && p.anchor.comp === c.id) connected.add(p.anchor.port);
-    for(const idx of connected){
+    const connected = new Map();
+    for(let idx=0; idx<s.ports.length; idx++){
+      const l = portConn(c, idx);
+      if(l) connected.set(idx, PIPES[l.pipe] ? l.pipe : 'otreteg20');
+    }
+    for(const [idx, connPipe] of connected){
       const port = s.ports[idx];
       if(!port || port.nv || port.f === 'fust') continue;
       // csap
@@ -1205,8 +1218,7 @@ function computeBOM(){
         if(key) vadd(key); else { missingValve++; continue; }
       }
       // indító idom a csap és a cső közé
-      const pipeKey = portPipe[c.id+':'+idx];
-      const fit = FITTINGS[pipeKey];
+      const fit = FITTINGS[connPipe];
       if(!fit) continue;
       const prodKey = fit.bySize && fit.bySize[fitSize];
       if(prodKey) fadd(PRODUCTS[prodKey].name, PRODUCTS[prodKey].price);
