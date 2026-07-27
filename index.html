@@ -295,7 +295,8 @@
        <b>„✓ Vezeték kész”</b> gomb (mobilon is), vagy <b>dupla kattintás</b> / <kbd>Enter</kbd>.</p>
     <p><b>Anyaglista:</b> az <b>≡ Anyaglista</b> gomb összegyűjti a lerakott berendezéseket,
        a vezetékek hosszát csőtípusonként (a lépték állítható), és <b>minden bekötött csonkhoz
-       automatikusan elzáró csapot</b> számol (gázcsonkhoz gázcsapot). CSV-be is letölthető.</p>
+       automatikusan elzáró csapot és a rákötött cső típusához illő indító idomot</b> számol
+       (gázcsonkhoz gázcsapot és gáz press indítót). CSV-be is letölthető.</p>
     <p><b>Mozgatás, szerkesztés:</b> Kijelölés eszközzel (<kbd>V</kbd>) húzd az elemeket.
        <kbd>R</kbd> forgat, <kbd>Del</kbd> töröl, <kbd>Ctrl+D</kbd> duplikál,
        dupla kattintással átnevezheted a feliratot. Kijelölt vezeték színe/csöve/vastagsága
@@ -355,10 +356,36 @@ const PRODUCTS = {
   gcs_64: {id:'mqzc1x4y3s69x', name:'Golyóscsap 6/4"', price:0, unit:'darab'},
   gaz_12: {id:'mqzc1x4y3u0ds', name:'Gázcsap 1/2" KB Hollandis egyenes', price:0, unit:'darab'},
   gaz_34: {id:'mqzc1x4y85jpn', name:'Gázcsap 3/4" KB egyenes', price:0, unit:'darab'},
-  gaz_1:  {id:'mqzc1x4y2nvm7', name:'Gázcsap 1" KB Hollandis egyenes', price:0, unit:'darab'}
+  gaz_1:  {id:'mqzc1x4y2nvm7', name:'Gázcsap 1" KB Hollandis egyenes', price:0, unit:'darab'},
+  gpi22_12:{id:'mqzc1x4y9617l', name:'Gáz press 22 KM 1/2" indító', price:0, unit:'darab'},
+  gpi22_34:{id:'mqzc1x4y8kxar', name:'Gáz press 22 KM 3/4" indító', price:0, unit:'darab'},
+  gpi28_34:{id:'mqzc1x4y7bif5', name:'Gáz press 28 KM 3/4" indító', price:0, unit:'darab'},
+  gpi28_1: {id:'mqzc1x4ycf0a8', name:'Gáz press 28 KM 1" indító', price:0, unit:'darab'}
 };
 const GOLYOSCSAP = {'1/2"':'gcs_12','3/4"':'gcs_34','1"':'gcs_1','5/4"':'gcs_54','6/4"':'gcs_64'};
 const GAZCSAP    = {'1/2"':'gaz_12','3/4"':'gaz_34','1"':'gaz_1'};
+
+/* Indító idom a csap és a cső közé – csőtípusonként.
+   Ahol az árlistában van konkrét termék (gáz press), azt használjuk;
+   a többinél a csőhöz illő megnevezés készül, 0 Ft-tal. */
+const FITTINGS = {
+  otreteg16:{label:'Ötrétegű press indító 16x2'},
+  otreteg20:{label:'Ötrétegű press indító 20x2'},
+  otreteg26:{label:'Ötrétegű press indító 26x3'},
+  otreteg40:{label:'Ötrétegű press indító 40x3,5'},
+  rez15:    {label:'Rézcső press indító 15'},
+  rez18:    {label:'Rézcső press indító 18'},
+  rez22:    {label:'Rézcső press indító 22'},
+  rez28:    {label:'Rézcső press indító 28'},
+  szenacel20:{label:'Szénacél press indító NA20'},
+  szenacel32:{label:'Szénacél press indító NA32'},
+  inox20:   {label:'INOX press indító NA20'},
+  inox25:   {label:'INOX press indító NA25'},
+  gaz20:    {label:'Gáz press 22 indító', bySize:{'1/2"':'gpi22_12','3/4"':'gpi22_34'}},
+  gaz25:    {label:'Gáz press 28 indító', bySize:{'3/4"':'gpi28_34','1"':'gpi28_1'}},
+  pert16:   {label:'PE-Rt press indító 16x2'},
+  kpe25:    {label:'KPE átmeneti idom 25'}
+};
 
 /* ================= Csőtípusok (méterár az árlistából) ================= */
 const PIPES = {
@@ -1026,13 +1053,27 @@ function computeBOM(){
     const m = Math.ceil(byPipe[k]*10)/10;
     pipeRows.push({name:PIPES[k].name, qty:m, unit:'méter', price:PIPES[k].price, uncat:false});
   }
-  // Elzáró csapok minden bekötött csonkhoz
-  const valveRows = new Map();
+  // Elzáró csapok + indító idomok minden bekötött csonkhoz
+  const valveRows = new Map(), fitRows = new Map();
   const vadd = (key) => {
     const p = PRODUCTS[key];
     const r = valveRows.get(p.name) || {name:p.name, qty:0, unit:p.unit, price:p.price, uncat:false};
     r.qty++; valveRows.set(p.name, r);
   };
+  const fadd = (name, price) => {
+    const r = fitRows.get(name) || {name, qty:0, unit:'darab', price, uncat:false};
+    r.qty++; fitRows.set(name, r);
+  };
+  // melyik csonkra milyen cső csatlakozik
+  const portPipe = {};
+  for(const l of state.lines){
+    const pk = PIPES[l.pipe] ? l.pipe : 'otreteg20';
+    for(const p of l.points)
+      if(p.anchor){
+        const k = p.anchor.comp+':'+p.anchor.port;
+        if(!(k in portPipe)) portPipe[k] = pk;
+      }
+  }
   let missingValve = 0;
   for(const c of state.comps){
     const s = SYMBOLS[c.type];
@@ -1043,15 +1084,27 @@ function computeBOM(){
     for(const idx of connected){
       const port = s.ports[idx];
       if(!port || port.nv || port.f === 'fust') continue;
-      if(s.valveProd){ vadd(s.valveProd); continue; }
-      const key = port.f === 'gaz' ? GAZCSAP[port.s] : GOLYOSCSAP[port.s];
-      if(key) vadd(key); else missingValve++;
+      // csap
+      let fitSize = port.s;
+      if(s.valveProd){ vadd(s.valveProd); fitSize = '1"'; }
+      else {
+        const key = port.f === 'gaz' ? GAZCSAP[port.s] : GOLYOSCSAP[port.s];
+        if(key) vadd(key); else { missingValve++; continue; }
+      }
+      // indító idom a csap és a cső közé
+      const pipeKey = portPipe[c.id+':'+idx];
+      const fit = FITTINGS[pipeKey];
+      if(!fit) continue;
+      const prodKey = fit.bySize && fit.bySize[fitSize];
+      if(prodKey) fadd(PRODUCTS[prodKey].name, PRODUCTS[prodKey].price);
+      else fadd(fit.label+' × '+fitSize+' KB', 0);
     }
   }
   return {
     equip: [...rows.values()],
     pipes: pipeRows,
     valves: [...valveRows.values()],
+    fittings: [...fitRows.values()],
     missingValve
   };
 }
@@ -1064,6 +1117,7 @@ function renderBOM(){
     {title:'Berendezések, szerelvények', rows:b.equip.filter(r=>!r.uncat)},
     {title:'Csővezetékek', rows:b.pipes},
     {title:'Elzáró csapok a bekötött csonkokhoz (automatikus)', rows:b.valves},
+    {title:'Indító idomok a csapokhoz (automatikus, a cső típusa szerint)', rows:b.fittings},
     {title:'Árlistán kívüli tételek', rows:b.equip.filter(r=>r.uncat)}
   ];
   let total = 0, any = false, h = '<table><thead><tr><th>Tétel</th><th class="num">Menny.</th><th>Egység</th><th class="num">Nettó egységár</th><th class="num">Összesen</th></tr></thead><tbody>';
@@ -1087,7 +1141,7 @@ function bomCsv(){
   const rows = [['Tétel','Mennyiség','Egység','Nettó egységár (Ft)','Nettó összesen (Ft)']];
   const push = r => rows.push([r.name, String(qtyStr(r)), r.unit, String(r.price), String(Math.round(r.qty*r.price))]);
   b.equip.filter(r=>!r.uncat).forEach(push); b.pipes.forEach(push); b.valves.forEach(push);
-  b.equip.filter(r=>r.uncat).forEach(push);
+  b.fittings.forEach(push); b.equip.filter(r=>r.uncat).forEach(push);
   return rows.map(r => r.map(c => '"'+c.replace(/"/g,'""')+'"').join(';')).join('\r\n');
 }
 
