@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Épületgépészeti tervrajz szerkesztő</title>
+<style>
+  :root{
+    --bg:#eef1f5; --panel:#ffffff; --panel2:#f6f8fb; --ink:#1c2733; --muted:#5b6b7c;
+    --line:#d8dfe8; --accent:#1d5fbf; --accent-soft:#e3edfb; --danger:#c0392b;
+    --paper:#ffffff; --shadow:0 1px 3px rgba(20,35,60,.12);
+  }
+  :root[data-theme="dark"]{ color-scheme:dark; }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#10161d; --panel:#1a222c; --panel2:#141b23; --ink:#e7edf4; --muted:#8aa0b5;
+      --line:#2b3543; --accent:#5b96e8; --accent-soft:#20344f; --danger:#e07060;
+      --shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10161d; --panel:#1a222c; --panel2:#141b23; --ink:#e7edf4; --muted:#8aa0b5;
+    --line:#2b3543; --accent:#5b96e8; --accent-soft:#20344f; --danger:#e07060;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"]{
+    --bg:#eef1f5; --panel:#ffffff; --panel2:#f6f8fb; --ink:#1c2733; --muted:#5b6b7c;
+    --line:#d8dfe8; --accent:#1d5fbf; --accent-soft:#e3edfb; --danger:#c0392b;
+    --shadow:0 1px 3px rgba(20,35,60,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); display:flex; flex-direction:column; overflow:hidden;
+  }
+  button{font:inherit; color:inherit; background:none; border:none; cursor:pointer}
+  button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+  /* ---------- fejléc / eszköztár ---------- */
+  header{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; flex-direction:column; margin-right:6px}
+  .brand b{font-size:14px; letter-spacing:.2px}
+  .brand span{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+  #docTitle{
+    font:inherit; font-weight:600; color:var(--ink); background:var(--panel2);
+    border:1px solid var(--line); border-radius:6px; padding:5px 9px; width:200px;
+  }
+  .tgroup{display:flex; align-items:center; gap:4px; padding:3px; background:var(--panel2);
+    border:1px solid var(--line); border-radius:8px}
+  .tbtn{
+    display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px;
+    font-size:12.5px; color:var(--muted); white-space:nowrap;
+  }
+  .tbtn svg{flex:none}
+  .tbtn:hover{background:var(--accent-soft); color:var(--ink)}
+  .tbtn.on{background:var(--accent); color:#fff}
+  .tbtn.on svg *{stroke:#fff}
+  .swatch{width:22px; height:22px; border-radius:50%; border:2px solid transparent; padding:0}
+  .swatch.on{border-color:var(--ink); box-shadow:0 0 0 2px var(--panel)}
+  select.ctl{
+    font:inherit; font-size:12.5px; color:var(--ink); background:var(--panel2);
+    border:1px solid var(--line); border-radius:6px; padding:4px 6px;
+  }
+  .sep{width:1px; align-self:stretch; background:var(--line); margin:2px 2px}
+  .spacer{flex:1}
+
+  /* ---------- törzs ---------- */
+  #main{flex:1; display:flex; min-height:0}
+  aside{
+    width:216px; flex:none; background:var(--panel); border-right:1px solid var(--line);
+    overflow-y:auto; padding:10px 10px 24px;
+  }
+  aside h3{
+    margin:14px 2px 6px; font-size:10.5px; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--muted); font-weight:600;
+  }
+  aside h3:first-child{margin-top:2px}
+  .pal{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+  .pitem{
+    display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 3px 5px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+  }
+  .pitem:hover{border-color:var(--accent); background:var(--accent-soft)}
+  .pitem.on{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+  .pitem .thumb{width:64px; height:46px}
+  .pitem .thumb svg{width:100%; height:100%}
+  .pitem b{font-size:10px; font-weight:500; color:var(--ink); text-align:center; line-height:1.25}
+
+  #canvasWrap{flex:1; position:relative; min-width:0; background:#dde3ea}
+  :root[data-theme="dark"] #canvasWrap{background:#0b1016}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #canvasWrap{background:#0b1016} }
+  #canvas{position:absolute; inset:0; width:100%; height:100%; touch-action:none; display:block}
+  #canvas.mode-line{cursor:crosshair}
+  #canvas.mode-text{cursor:text}
+  #canvas.mode-place{cursor:copy}
+
+  .zoombox{
+    position:absolute; right:12px; bottom:12px; display:flex; gap:4px; padding:4px;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow);
+  }
+  .zoombox button{padding:3px 9px; border-radius:5px; font-size:13px}
+  .zoombox button:hover{background:var(--accent-soft)}
+
+  footer{
+    display:flex; gap:16px; align-items:center; padding:5px 12px; font-size:12px;
+    color:var(--muted); background:var(--panel); border-top:1px solid var(--line);
+  }
+  footer .hint{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  footer .num{font-variant-numeric:tabular-nums}
+
+  /* ---------- súgó ---------- */
+  #help{
+    position:fixed; inset:0; background:rgba(10,18,28,.55); display:none;
+    align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  #help.open{display:flex}
+  #help .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    max-width:520px; max-height:85vh; overflow-y:auto; padding:22px 26px; box-shadow:0 10px 40px rgba(0,0,0,.3);
+  }
+  #help h2{margin:0 0 4px; font-size:17px}
+  #help p{margin:8px 0; font-size:13.5px; line-height:1.55; color:var(--muted)}
+  #help p b{color:var(--ink)}
+  #help kbd{
+    font:11px ui-monospace,Menlo,monospace; background:var(--panel2); border:1px solid var(--line);
+    border-bottom-width:2px; border-radius:4px; padding:1px 5px; color:var(--ink);
+  }
+  #help .close{float:right; font-size:20px; color:var(--muted); padding:0 4px}
+
+  @media print{
+    header, aside, footer, .zoombox, #help{display:none !important}
+    body, #main{overflow:visible}
+    #canvasWrap{position:fixed; inset:0; background:#fff}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>Gépész­terv</b><span>kapcsolási vázlat</span></div>
+  <input id="docTitle" value="Névtelen tervrajz" aria-label="Rajz címe">
+
+  <div class="tgroup" role="group" aria-label="Eszközök">
+    <button class="tbtn" id="mSelect" title="Kijelölés / mozgatás (V)">
+      <svg width="13" height="13" viewBox="0 0 16 16"><path d="M3 1l10 6.5-4.5 1L6 13z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      Kijelölés</button>
+    <button class="tbtn" id="mLine" title="Csővezeték rajzolása (L)">
+      <svg width="13" height="13" viewBox="0 0 16 16"><path d="M2 13L7 8h5l2-5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      Vezeték</button>
+    <button class="tbtn" id="mText" title="Szöveg elhelyezése (T)">
+      <svg width="13" height="13" viewBox="0 0 16 16"><path d="M2 3h12M8 3v10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      Szöveg</button>
+  </div>
+
+  <div class="tgroup" role="group" aria-label="Vezeték színe" id="colorGroup"></div>
+
+  <div class="tgroup" role="group" aria-label="Vonal beállítás">
+    <select class="ctl" id="lineWidth" title="Vonalvastagság">
+      <option value="2">Vékony</option>
+      <option value="3" selected>Normál</option>
+      <option value="5">Vastag</option>
+    </select>
+    <select class="ctl" id="lineDash" title="Vonaltípus">
+      <option value="">Folytonos</option>
+      <option value="8 6">Szaggatott</option>
+      <option value="2 5">Pontozott</option>
+    </select>
+    <button class="tbtn on" id="orthoBtn" title="Derékszögű vezetés ki/be">90°</button>
+  </div>
+
+  <div class="tgroup" role="group" aria-label="Szerkesztés">
+    <button class="tbtn" id="rotBtn" title="Elforgatás 90° (R)">⟳ Forgat</button>
+    <button class="tbtn" id="dupBtn" title="Duplikálás (Ctrl+D)">⧉</button>
+    <button class="tbtn" id="delBtn" title="Törlés (Del)" style="color:var(--danger)">✕ Törlés</button>
+  </div>
+
+  <div class="tgroup" role="group" aria-label="Előzmények">
+    <button class="tbtn" id="undoBtn" title="Visszavonás (Ctrl+Z)">↶</button>
+    <button class="tbtn" id="redoBtn" title="Mégis (Ctrl+Y)">↷</button>
+  </div>
+
+  <span class="spacer"></span>
+
+  <div class="tgroup" role="group" aria-label="Fájl">
+    <button class="tbtn" id="newBtn">Új</button>
+    <button class="tbtn" id="saveBtn" title="Mentés JSON fájlba">Mentés</button>
+    <button class="tbtn" id="openBtn" title="JSON fájl megnyitása">Megnyitás</button>
+    <button class="tbtn" id="svgBtn" title="Exportálás SVG képként">SVG</button>
+    <button class="tbtn" id="pngBtn" title="Exportálás PNG képként">PNG</button>
+    <button class="tbtn" id="printBtn" title="Nyomtatás">🖨</button>
+    <button class="tbtn" id="helpBtn" title="Súgó">?</button>
+  </div>
+  <input type="file" id="fileInput" accept=".json,application/json" hidden>
+</header>
+
+<div id="main">
+  <aside id="palette" aria-label="Elemtár"></aside>
+
+  <div id="canvasWrap">
+    <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0H0V20" fill="none" stroke="#e4eaf2" stroke-width="1"/>
+        </pattern>
+        <pattern id="grid100" width="100" height="100" patternUnits="userSpaceOnUse">
+          <path d="M100 0H0V100" fill="none" stroke="#d2dbe7" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <g id="world">
+        <rect id="paper" x="-20000" y="-20000" width="40000" height="40000" fill="#ffffff"/>
+        <rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#grid)"/>
+        <rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#grid100)"/>
+        <g id="gLines"></g>
+        <g id="gComps"></g>
+        <g id="gTexts"></g>
+        <g id="gOverlay"></g>
+      </g>
+    </svg>
+    <div class="zoombox">
+      <button id="zOut" title="Kicsinyítés">−</button>
+      <button id="zFit" title="Rajz méretre igazítása">⛶</button>
+      <button id="zIn" title="Nagyítás">+</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="hint" id="hint">Válassz elemet a bal oldali tárból, vagy rajzolj vezetéket.</span>
+  <span class="num" id="zoomLbl">100%</span>
+  <span class="num" id="coordLbl">0 ; 0</span>
+</footer>
+
+<div id="help" role="dialog" aria-modal="true" aria-label="Súgó">
+  <div class="card">
+    <button class="close" id="helpClose" aria-label="Bezárás">×</button>
+    <h2>Hogyan használd?</h2>
+    <p><b>Elem elhelyezése:</b> kattints egy elemre a bal oldali tárban, majd kattints a rajzlapra.
+       <kbd>Shift</kbd>-tel több példányt is lerakhatsz egymás után. <kbd>Esc</kbd> megszakítja.</p>
+    <p><b>Vezeték rajzolása:</b> válaszd a <b>Vezeték</b> eszközt (<kbd>L</kbd>) és a színt
+       (piros = fűtés előremenő, kék = visszatérő / hidegvíz, sárga = gáz, narancs = HMV, zöld = egyéb).
+       Kattintgatással törésponttól töréspontig rajzolsz; az elemek csatlakozási pontjaira (kis körök)
+       a vonal rátapad, és az elem mozgatásakor vele megy. Befejezés: <b>dupla kattintás</b>,
+       <kbd>Enter</kbd> vagy jobb gomb. A <b>90°</b> gomb a derékszögű vezetést kapcsolja.</p>
+    <p><b>Mozgatás, szerkesztés:</b> Kijelölés eszközzel (<kbd>V</kbd>) húzd az elemeket.
+       <kbd>R</kbd> forgat, <kbd>Del</kbd> töröl, <kbd>Ctrl+D</kbd> duplikál,
+       dupla kattintással átnevezheted az elem feliratát vagy a szöveget.
+       Kijelölt vezeték színe/vastagsága a fenti gombokkal módosítható.</p>
+    <p><b>Nézet:</b> görgővel nagyítasz, üres területet húzva (vagy középső gombbal) mozgatod a rajzlapot.</p>
+    <p><b>Mentés:</b> a rajz automatikusan mentődik a böngészőbe. A <b>Mentés / Megnyitás</b> gombokkal
+       JSON fájlba írhatod ki, az <b>SVG / PNG</b> gombokkal képként exportálhatod.</p>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================= Jelkulcs – szimbólumok ================= */
+const INK = '#243447';
+const S2 = 'stroke="'+INK+'" stroke-width="2" fill="none"';
+const S2F = 'stroke="'+INK+'" stroke-width="2" fill="#fff"';
+const TXT = 'fill="'+INK+'" font-family="system-ui,sans-serif" text-anchor="middle"';
+
+function fan(cx,cy,r){
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" '+S2+'/>' +
+    '<path d="M'+cx+' '+cy+' q'+(r*0.7)+' -'+(r*0.9)+' 0 -'+r+'M'+cx+' '+cy+' q'+(r*0.55)+' '+(r*0.85)+' '+(r*0.87)+' '+(r*0.5)+'M'+cx+' '+cy+' q-'+(r*1.05)+' '+(r*0.1)+' -'+(r*0.87)+' '+(r*0.5)+'" '+S2+'/>' +
+    '<circle cx="'+cx+'" cy="'+cy+'" r="2.5" fill="'+INK+'"/>';
+}
+function bowtie(x,y,w,h){ // vízszintes szelep-test, (x,y) bal felső
+  const cx=x+w/2, cy=y+h/2;
+  return '<path d="M'+x+' '+y+' L'+cx+' '+cy+' L'+x+' '+(y+h)+' Z M'+(x+w)+' '+y+' L'+cx+' '+cy+' L'+(x+w)+' '+(y+h)+' Z" '+S2F+'/>';
+}
+
+const SYMBOLS = {
+  kazan_fali:{ name:'Gázkazán (fali)', cat:'Hőtermelők', w:80, h:96,
+    ports:[[20,96],[60,96],[40,96],[40,0]],
+    svg:'<rect x="1" y="1" width="78" height="94" rx="6" '+S2F+'/>' +
+        '<path d="M40 26 C29 44 31 58 40 66 C49 58 51 44 40 26 Z" '+S2+'/>' +
+        '<path d="M40 44 C36 52 37 58 40 61 C43 58 44 52 40 44 Z" fill="'+INK+'"/>' +
+        '<line x1="1" y1="80" x2="79" y2="80" '+S2+'/>' },
+  kazan_allo:{ name:'Kazán (álló)', cat:'Hőtermelők', w:80, h:90,
+    ports:[[0,20],[0,70],[80,20],[40,0]],
+    svg:'<rect x="1" y="9" width="78" height="80" rx="8" '+S2F+'/>' +
+        '<rect x="30" y="1" width="20" height="8" '+S2F+'/>' +
+        '<path d="M40 34 C31 48 33 60 40 66 C47 60 49 48 40 34 Z" '+S2+'/>' },
+  hp_kulteri:{ name:'Hőszivattyú kültéri', cat:'Hőtermelők', w:104, h:70,
+    ports:[[104,22],[104,48]],
+    svg:'<rect x="1" y="1" width="102" height="68" rx="5" '+S2F+'/>' +
+        fan(34,35,22) +
+        '<line x1="66" y1="10" x2="66" y2="60" '+S2+'/>' +
+        '<line x1="76" y1="14" x2="96" y2="14" '+S2+'/><line x1="76" y1="26" x2="96" y2="26" '+S2+'/>' +
+        '<line x1="76" y1="38" x2="96" y2="38" '+S2+'/><line x1="76" y1="50" x2="96" y2="50" '+S2+'/>' },
+  hp_belteri:{ name:'Hőszivattyú beltéri', cat:'Hőtermelők', w:78, h:92,
+    ports:[[0,24],[0,46],[20,92],[58,92]],
+    svg:'<rect x="1" y="1" width="76" height="90" rx="6" '+S2F+'/>' +
+        '<circle cx="39" cy="34" r="17" '+S2+'/>' +
+        '<path d="M39 20 v28 M27 27l24 14 M27 41l24-14" '+S2+'/>' +
+        '<line x1="1" y1="66" x2="77" y2="66" '+S2+'/>' +
+        '<text x="39" y="83" font-size="11" '+TXT+'>hidro</text>' },
+  napkollektor:{ name:'Napkollektor', cat:'Hőtermelők', w:96, h:62,
+    ports:[[0,52],[96,10]],
+    svg:'<rect x="1" y="1" width="94" height="60" '+S2F+'/>' +
+        '<path d="M24 61 L64 1 M44 61 L84 1 M8 45 L37 1 M64 61 L94 16" '+S2+'/>' },
+
+  puffer:{ name:'Puffertartály', cat:'Tárolók, elosztás', w:70, h:112,
+    ports:[[0,24],[0,92],[70,24],[70,92]],
+    svg:'<rect x="1" y="1" width="68" height="110" rx="16" '+S2F+'/>' +
+        '<path d="M14 40 q21 12 42 0 M14 66 q21 12 42 0" stroke="'+INK+'" stroke-width="1.4" fill="none" stroke-dasharray="4 4"/>' },
+  hmv:{ name:'HMV tároló', cat:'Tárolók, elosztás', w:72, h:110,
+    ports:[[0,34],[0,84],[36,0],[72,96]],
+    svg:'<rect x="1" y="1" width="70" height="108" rx="16" '+S2F+'/>' +
+        '<path d="M14 36 c30 0 30 14 0 14 c30 0 30 14 0 14 c30 0 30 14 0 14" '+S2+'/>' },
+  tagulasi:{ name:'Tágulási tartály', cat:'Tárolók, elosztás', w:48, h:58,
+    ports:[[24,58]],
+    svg:'<circle cx="24" cy="25" r="23" '+S2F+'/>' +
+        '<path d="M2 25 q11 8 22 0 q11 -8 22 0" '+S2+'/>' +
+        '<line x1="24" y1="48" x2="24" y2="58" '+S2+'/>' },
+  hidr_valto:{ name:'Hidraulikus váltó', cat:'Tárolók, elosztás', w:30, h:104,
+    ports:[[0,18],[0,86],[30,18],[30,86]],
+    svg:'<rect x="1" y="1" width="28" height="102" rx="8" '+S2F+'/>' },
+  hocserelo:{ name:'Hőcserélő', cat:'Tárolók, elosztás', w:48, h:68,
+    ports:[[0,14],[0,54],[48,14],[48,54]],
+    svg:'<rect x="1" y="1" width="46" height="66" '+S2F+'/>' +
+        '<path d="M1 1 L47 67 M47 1 L1 67" '+S2+'/>' },
+  osztogyujto:{ name:'Osztó-gyűjtő', cat:'Tárolók, elosztás', w:128, h:44,
+    ports:[[0,10],[0,34],[34,0],[64,0],[94,0],[34,44],[64,44],[94,44]],
+    svg:'<rect x="1" y="4" width="126" height="12" rx="5" '+S2F+'/>' +
+        '<rect x="1" y="28" width="126" height="12" rx="5" '+S2F+'/>' +
+        '<path d="M34 4v-4 M64 4v-4 M94 4v-4 M34 40v4 M64 40v4 M94 40v4" '+S2+'/>' },
+
+  szivattyu:{ name:'Szivattyú', cat:'Szerelvények', w:44, h:44,
+    ports:[[0,22],[44,22]],
+    svg:'<circle cx="22" cy="22" r="20" '+S2F+'/>' +
+        '<path d="M12 10 L38 22 L12 34 Z" '+S2+'/>' },
+  valtoszelep:{ name:'Váltószelep (3j)', cat:'Szerelvények', w:48, h:58,
+    ports:[[0,34],[48,34],[24,58]],
+    svg:'<path d="M1 24 L24 34 L1 44 Z M47 24 L24 34 L47 44 Z" '+S2F+'/>' +
+        '<path d="M14 47 L24 34 L34 47 Z" stroke="'+INK+'" stroke-width="2" fill="'+INK+'" transform="translate(0,10)"/>' +
+        '<line x1="24" y1="34" x2="24" y2="16" '+S2+'/>' +
+        '<rect x="14" y="1" width="20" height="15" '+S2F+'/>' +
+        '<text x="24" y="12.5" font-size="11" '+TXT+'>M</text>' },
+  keveroszelep:{ name:'Keverőszelep (3j)', cat:'Szerelvények', w:48, h:58,
+    ports:[[0,34],[48,34],[24,58]],
+    svg:'<path d="M1 24 L24 34 L1 44 Z M47 24 L24 34 L47 44 Z M14 57 L24 34 L34 57 Z" '+S2F+'/>' +
+        '<line x1="24" y1="34" x2="24" y2="16" '+S2+'/>' +
+        '<rect x="14" y="1" width="20" height="15" '+S2F+'/>' +
+        '<text x="24" y="12.5" font-size="11" '+TXT+'>M</text>' +
+        '<path d="M8 52 a18 18 0 0 1 10 -12" stroke="'+INK+'" stroke-width="1.6" fill="none"/>' +
+        '<path d="M16 38 l3 2 l-3.5 2 Z" fill="'+INK+'"/>' },
+  golyoscsap:{ name:'Golyóscsap', cat:'Szerelvények', w:44, h:24,
+    ports:[[0,12],[44,12]],
+    svg:bowtie(1,1,42,22) + '<circle cx="22" cy="12" r="5.5" '+S2F+'/>' },
+  visszacsapo:{ name:'Visszacsapó szelep', cat:'Szerelvények', w:44, h:24,
+    ports:[[0,12],[44,12]],
+    svg:'<path d="M1 1 L22 12 L1 23 Z" '+S2F+'/>' +
+        '<path d="M43 1 L22 12 L43 23 Z" stroke="'+INK+'" stroke-width="2" fill="'+INK+'"/>' },
+  biztonsagi:{ name:'Biztonsági szelep', cat:'Szerelvények', w:44, h:46,
+    ports:[[0,34],[44,34]],
+    svg:bowtie(1,23,42,22) +
+        '<line x1="22" y1="34" x2="22" y2="18" '+S2+'/>' +
+        '<path d="M14 18 l16 -4 l-16 -4 l16 -4" '+S2+'/>' },
+  szuro:{ name:'Szűrő', cat:'Szerelvények', w:44, h:34,
+    ports:[[0,8],[44,8]],
+    svg:'<line x1="0" y1="8" x2="44" y2="8" '+S2+'/>' +
+        '<path d="M14 8 L26 30 L34 26" '+S2+'/>' +
+        '<line x1="22" y1="21" x2="30" y2="17" stroke="'+INK+'" stroke-width="1.5"/>' },
+  magnesszelep:{ name:'Mágnesszelep', cat:'Szerelvények', w:44, h:42,
+    ports:[[0,30],[44,30]],
+    svg:bowtie(1,19,42,22) +
+        '<line x1="22" y1="30" x2="22" y2="12" '+S2+'/>' +
+        '<rect x="13" y="1" width="18" height="11" '+S2F+'/>' +
+        '<text x="22" y="10" font-size="9" '+TXT+'>S</text>' },
+
+  radiator:{ name:'Radiátor', cat:'Hőleadók', w:92, h:58,
+    ports:[[0,10],[92,48]],
+    svg:'<rect x="1" y="1" width="90" height="56" '+S2F+'/>' +
+        '<path d="M13 1v56 M25 1v56 M37 1v56 M49 1v56 M61 1v56 M73 1v56 M85 1v56" stroke="'+INK+'" stroke-width="1.4"/>' },
+  padlofutes:{ name:'Padlófűtés kör', cat:'Hőleadók', w:92, h:62,
+    ports:[[0,14],[0,40]],
+    svg:'<rect x="1" y="1" width="90" height="60" rx="4" '+S2F+'/>' +
+        '<path d="M1 14 H78 a8 8 0 0 1 0 16 H24 a7 7 0 0 0 0 14 H60" '+S2+'/>' +
+        '<path d="M60 40 l8 4 l-8 4" transform="translate(0,0)" stroke="'+INK+'" stroke-width="1.6" fill="none"/>' },
+  fancoil:{ name:'Fan-coil', cat:'Hőleadók', w:84, h:54,
+    ports:[[18,54],[62,54]],
+    svg:'<rect x="1" y="1" width="82" height="52" rx="5" '+S2F+'/>' + fan(28,27,16) +
+        '<path d="M54 8v38 M64 8v38 M74 8v38" stroke="'+INK+'" stroke-width="1.4"/>' },
+
+  homero:{ name:'Hőmérő', cat:'Mérés, egyéb', w:28, h:40,
+    ports:[[14,40]],
+    svg:'<circle cx="14" cy="14" r="13" '+S2F+'/>' +
+        '<text x="14" y="19" font-size="13" '+TXT+'>T</text>' +
+        '<line x1="14" y1="27" x2="14" y2="40" '+S2+'/>' },
+  nyomasmero:{ name:'Nyomásmérő', cat:'Mérés, egyéb', w:28, h:40,
+    ports:[[14,40]],
+    svg:'<circle cx="14" cy="14" r="13" '+S2F+'/>' +
+        '<text x="14" y="19" font-size="13" '+TXT+'>P</text>' +
+        '<line x1="14" y1="27" x2="14" y2="40" '+S2+'/>' },
+  gazora:{ name:'Gázmérő', cat:'Mérés, egyéb', w:56, h:42,
+    ports:[[8,0],[48,0]],
+    svg:'<rect x="1" y="9" width="54" height="32" rx="4" '+S2F+'/>' +
+        '<path d="M8 9V0 M48 9V0" '+S2+'/>' +
+        '<text x="28" y="30" font-size="12" '+TXT+'>GÁZ</text>' },
+  legtelenito:{ name:'Légtelenítő', cat:'Mérés, egyéb', w:24, h:34,
+    ports:[[12,34]],
+    svg:'<circle cx="12" cy="12" r="10" '+S2F+'/>' +
+        '<path d="M6 12 a6 6 0 0 1 12 0" '+S2+'/>' +
+        '<line x1="12" y1="22" x2="12" y2="34" '+S2+'/>' },
+  termosztat:{ name:'Termosztát', cat:'Mérés, egyéb', w:34, h:34,
+    ports:[[17,34]],
+    svg:'<rect x="1" y="1" width="32" height="32" rx="6" '+S2F+'/>' +
+        '<text x="17" y="22" font-size="12" '+TXT+'>T°</text>' }
+};
+
+/* ================= Vezeték-színek ================= */
+const COLORS = [
+  {c:'#d21f2c', n:'Piros – fűtés előremenő'},
+  {c:'#1857c9', n:'Kék – visszatérő / hidegvíz'},
+  {c:'#e0a800', n:'Sárga – gáz'},
+  {c:'#f07818', n:'Narancs – HMV'},
+  {c:'#1e9e4a', n:'Zöld – egyéb'},
+  {c:'#243447', n:'Fekete – általános'}
+];
+
+/* ================= Állapot ================= */
+let state = { title:'Névtelen tervrajz', nextId:1, comps:[], lines:[], texts:[] };
+let view = { x:-40, y:-40, scale:1 };
+let mode = 'select';           // select | line | text | place
+let placingType = null;
+let sel = null;                // {kind:'comp'|'line'|'text', id}
+let draw = null;               // folyamatban lévő vezeték {color,width,dash,points:[...]}
+let curColor = COLORS[0].c, ortho = true;
+let undoStack = [], redoStack = [];
+let mouse = {x:0, y:0};
+
+const $ = id => document.getElementById(id);
+const svg = $('canvas'), world = $('world');
+const gLines = $('gLines'), gComps = $('gComps'), gTexts = $('gTexts'), gOverlay = $('gOverlay');
+const GRID = 10;
+const snap = v => Math.round(v/GRID)*GRID;
+
+/* ================= Nézet ================= */
+function applyView(){
+  const r = svg.getBoundingClientRect();
+  svg.setAttribute('viewBox', view.x+' '+view.y+' '+(r.width/view.scale)+' '+(r.height/view.scale));
+  $('zoomLbl').textContent = Math.round(view.scale*100)+'%';
+}
+function toWorld(e){
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:p.x, y:p.y};
+}
+function zoomAt(cx, cy, f){
+  const ns = Math.min(4, Math.max(.15, view.scale*f));
+  view.x = cx - (cx-view.x)*(view.scale/ns);
+  view.y = cy - (cy-view.y)*(view.scale/ns);
+  view.scale = ns; applyView();
+}
+
+/* ================= Portok ================= */
+function portWorld(comp, i){
+  const s = SYMBOLS[comp.type], p = s.ports[i];
+  const cx = s.w/2, cy = s.h/2, a = (comp.rot||0)*Math.PI/180;
+  const dx = p[0]-cx, dy = p[1]-cy;
+  return { x: comp.x+cx + dx*Math.cos(a) - dy*Math.sin(a),
+           y: comp.y+cy + dx*Math.sin(a) + dy*Math.cos(a) };
+}
+function nearestPort(wx, wy){
+  const R = 14/view.scale; let best = null, bd = R;
+  for(const c of state.comps){
+    const s = SYMBOLS[c.type];
+    for(let i=0;i<s.ports.length;i++){
+      const p = portWorld(c,i);
+      const d = Math.hypot(p.x-wx, p.y-wy);
+      if(d < bd){ bd = d; best = {comp:c.id, port:i, x:p.x, y:p.y}; }
+    }
+  }
+  return best;
+}
+function syncAnchors(){
+  for(const l of state.lines) for(const p of l.points){
+    if(p.anchor){
+      const c = state.comps.find(c => c.id === p.anchor.comp);
+      if(c){ const w = portWorld(c, p.anchor.port); p.x = w.x; p.y = w.y; }
+      else delete p.anchor;
+    }
+  }
+}
+
+/* ================= Renderelés ================= */
+function compMarkup(c, ghost){
+  const s = SYMBOLS[c.type];
+  const tr = 'translate('+c.x+' '+c.y+')' + (c.rot ? ' rotate('+c.rot+' '+(s.w/2)+' '+(s.h/2)+')' : '');
+  let inner = s.svg;
+  // felirat – forgatásnál is talpon marad
+  const lr = c.rot ? ' transform="rotate('+(-c.rot)+' '+(s.w/2)+' '+(s.h+16)+')"' : '';
+  inner += '<text x="'+(s.w/2)+'" y="'+(s.h+16)+'" font-size="11" '+TXT+lr+'>'+esc(c.label)+'</text>';
+  if(!ghost && sel && sel.kind==='comp' && sel.id===c.id)
+    inner += '<rect x="-6" y="-6" width="'+(s.w+12)+'" height="'+(s.h+12)+'" fill="none" stroke="#1d8be0" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
+  if(!ghost && (mode==='line' || (sel && sel.kind==='comp' && sel.id===c.id)))
+    inner += s.ports.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#fff" stroke="#1d8be0" stroke-width="1.6"/>').join('');
+  return '<g '+(ghost?'opacity="0.5"':'data-comp="'+c.id+'"')+' transform="'+tr+'">'+inner+'</g>';
+}
+function lineAttrs(l){
+  return 'stroke="'+l.color+'" stroke-width="'+l.width+'" fill="none" stroke-linejoin="round" stroke-linecap="round"'
+       + (l.dash ? ' stroke-dasharray="'+l.dash+'"' : '');
+}
+function lineMarkup(l){
+  const pts = l.points.map(p=>p.x+','+p.y).join(' ');
+  let m = '';
+  if(sel && sel.kind==='line' && sel.id===l.id)
+    m += '<polyline points="'+pts+'" stroke="#7cb8ff" stroke-width="'+(+l.width+6)+'" fill="none" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>';
+  m += '<polyline points="'+pts+'" '+lineAttrs(l)+'/>';
+  m += '<polyline points="'+pts+'" stroke="rgba(0,0,0,0)" stroke-width="14" fill="none" data-line="'+l.id+'"/>';
+  return m;
+}
+function textMarkup(t){
+  const selr = (sel && sel.kind==='text' && sel.id===t.id)
+    ? '<rect x="-4" y="-'+(t.size+2)+'" width="'+(t.text.length*t.size*0.62+8)+'" height="'+(t.size+10)+'" fill="none" stroke="#1d8be0" stroke-dasharray="4 3" stroke-width="1.2"/>' : '';
+  return '<g data-text="'+t.id+'" transform="translate('+t.x+' '+t.y+')">'+selr+
+    '<text font-size="'+t.size+'" fill="'+INK+'" font-family="system-ui,sans-serif">'+esc(t.text)+'</text></g>';
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function render(){
+  syncAnchors();
+  gLines.innerHTML = state.lines.map(lineMarkup).join('');
+  gComps.innerHTML = state.comps.map(c=>compMarkup(c,false)).join('');
+  gTexts.innerHTML = state.texts.map(textMarkup).join('');
+  renderOverlay();
+}
+function renderOverlay(){
+  let m = '';
+  if(mode==='place' && placingType){
+    const s = SYMBOLS[placingType];
+    m += compMarkup({type:placingType, x:snap(mouse.x-s.w/2), y:snap(mouse.y-s.h/2), rot:0, label:s.name}, true);
+  }
+  if(draw && draw.points.length){
+    const np = lineNextPoint(mouse.x, mouse.y);
+    const pts = draw.points.concat(np.pts).map(p=>p.x+','+p.y).join(' ');
+    m += '<polyline points="'+pts+'" '+lineAttrs(draw)+' opacity="0.8"/>';
+  }
+  if(mode==='line'){
+    const t = nearestPort(mouse.x, mouse.y);
+    if(t) m += '<circle cx="'+t.x+'" cy="'+t.y+'" r="7" fill="none" stroke="#1d8be0" stroke-width="2"/>';
+  }
+  gOverlay.innerHTML = m;
+}
+
+/* ================= Előzmények / mentés ================= */
+function pushHistory(){
+  undoStack.push(JSON.stringify(state));
+  if(undoStack.length > 120) undoStack.shift();
+  redoStack.length = 0;
+}
+function undo(){ if(!undoStack.length) return;
+  redoStack.push(JSON.stringify(state));
+  state = JSON.parse(undoStack.pop()); sel=null; afterChange(); }
+function redo(){ if(!redoStack.length) return;
+  undoStack.push(JSON.stringify(state));
+  state = JSON.parse(redoStack.pop()); sel=null; afterChange(); }
+function afterChange(){
+  $('docTitle').value = state.title;
+  render();
+  try{ localStorage.setItem('gepeszterv-v1', JSON.stringify(state)); }catch(e){}
+}
+
+/* ================= Vezeték-rajzolás ================= */
+function lineNextPoint(wx, wy){
+  const last = (draw && draw.points.length) ? draw.points[draw.points.length-1] : null;
+  const port = nearestPort(wx, wy);
+  let tx, ty, anchor = null;
+  if(port){ tx = port.x; ty = port.y; anchor = {comp:port.comp, port:port.port}; }
+  else { tx = snap(wx); ty = snap(wy); }
+  if(!ortho || !last) return {pts:[{x:tx,y:ty,anchor}]};
+  const dx = Math.abs(tx-last.x), dy = Math.abs(ty-last.y);
+  if(anchor){
+    if(dx < 1 || dy < 1) return {pts:[{x:tx,y:ty,anchor}]};
+    const elbow = dx >= dy ? {x:tx, y:last.y} : {x:last.x, y:ty};
+    return {pts:[elbow, {x:tx,y:ty,anchor}]};
+  }
+  return {pts:[ dx >= dy ? {x:tx, y:last.y} : {x:last.x, y:ty} ]};
+}
+function finishLine(){
+  if(draw && draw.points.length >= 2){
+    pushHistory();
+    draw.id = 'l'+(state.nextId++);
+    state.lines.push(draw);
+  }
+  draw = null; afterChange(); setHint();
+}
+
+/* ================= Módok ================= */
+function setMode(m){
+  mode = m;
+  if(m !== 'place') placingType = null;
+  if(m !== 'line' && draw){ draw = null; }
+  $('mSelect').classList.toggle('on', m==='select');
+  $('mLine').classList.toggle('on', m==='line');
+  $('mText').classList.toggle('on', m==='text');
+  document.querySelectorAll('.pitem').forEach(el =>
+    el.classList.toggle('on', m==='place' && el.dataset.type===placingType));
+  svg.classList.remove('mode-line','mode-text','mode-place');
+  if(m==='line') svg.classList.add('mode-line');
+  if(m==='text') svg.classList.add('mode-text');
+  if(m==='place') svg.classList.add('mode-place');
+  setHint(); render();
+}
+function setHint(t){
+  const def = {
+    select:'Húzd az elemeket; üres területet húzva mozgatod a nézetet. Dupla katt: átnevezés.',
+    line:'Kattintgatva rajzolj; a kis körökre rátapad a vezeték. Befejezés: dupla katt vagy Enter, mégse: Esc.',
+    text:'Kattints a rajzlapra a szöveg helyének kijelöléséhez.',
+    place:'Kattints a rajzlapra az elem lerakásához. Shift = több példány, Esc = mégse.'
+  };
+  $('hint').textContent = t || def[mode] || '';
+}
+
+/* ================= Eseménykezelés ================= */
+let dragCtx = null; // {kind:'pan'|'comp'|'text', ...}
+
+svg.addEventListener('pointerdown', e => {
+  if(e.button === 1){ // középső gomb: pan bárhol
+    dragCtx = {kind:'pan', sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y};
+    svg.setPointerCapture(e.pointerId); e.preventDefault(); return;
+  }
+  if(e.button !== 0) return;
+  const w = toWorld(e);
+
+  if(mode === 'place' && placingType){
+    const s = SYMBOLS[placingType];
+    pushHistory();
+    state.comps.push({ id:'c'+(state.nextId++), type:placingType,
+      x:snap(w.x-s.w/2), y:snap(w.y-s.h/2), rot:0, label:s.name });
+    afterChange();
+    if(!e.shiftKey){ placingType = null; setMode('select'); sel = {kind:'comp', id:state.comps[state.comps.length-1].id}; render(); }
+    return;
+  }
+  if(mode === 'line'){
+    const np = lineNextPoint(w.x, w.y);
+    if(!draw){
+      draw = { color:curColor, width:+$('lineWidth').value, dash:$('lineDash').value, points:[] };
+      draw.points.push(np.pts[np.pts.length-1]);
+    } else draw.points.push(...np.pts);
+    renderOverlay(); return;
+  }
+  if(mode === 'text'){
+    const txt = prompt('Szöveg:');
+    if(txt){ pushHistory();
+      state.texts.push({id:'t'+(state.nextId++), x:snap(w.x), y:snap(w.y), text:txt, size:14});
+      afterChange(); }
+    setMode('select'); return;
+  }
+
+  // select mód
+  const gc = e.target.closest('[data-comp]');
+  const gl = e.target.closest('[data-line]');
+  const gt = e.target.closest('[data-text]');
+  if(gc){
+    const c = state.comps.find(c => c.id === gc.dataset.comp);
+    sel = {kind:'comp', id:c.id};
+    dragCtx = {kind:'comp', id:c.id, ox:w.x-c.x, oy:w.y-c.y, moved:false};
+    svg.setPointerCapture(e.pointerId); render(); return;
+  }
+  if(gt){
+    const t = state.texts.find(t => t.id === gt.dataset.text);
+    sel = {kind:'text', id:t.id};
+    dragCtx = {kind:'text', id:t.id, ox:w.x-t.x, oy:w.y-t.y, moved:false};
+    svg.setPointerCapture(e.pointerId); render(); return;
+  }
+  if(gl){
+    sel = {kind:'line', id:gl.dataset.line}; render(); return;
+  }
+  sel = null; render();
+  dragCtx = {kind:'pan', sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y};
+  svg.setPointerCapture(e.pointerId);
+});
+
+svg.addEventListener('pointermove', e => {
+  const w = toWorld(e); mouse = w;
+  $('coordLbl').textContent = Math.round(w.x)+' ; '+Math.round(w.y);
+  if(dragCtx){
+    if(dragCtx.kind === 'pan'){
+      view.x = dragCtx.vx - (e.clientX-dragCtx.sx)/view.scale;
+      view.y = dragCtx.vy - (e.clientY-dragCtx.sy)/view.scale;
+      applyView(); return;
+    }
+    if(dragCtx.kind === 'comp'){
+      const c = state.comps.find(c => c.id === dragCtx.id);
+      if(!dragCtx.moved){ pushHistory(); dragCtx.moved = true; }
+      c.x = snap(w.x-dragCtx.ox); c.y = snap(w.y-dragCtx.oy);
+      render(); return;
+    }
+    if(dragCtx.kind === 'text'){
+      const t = state.texts.find(t => t.id === dragCtx.id);
+      if(!dragCtx.moved){ pushHistory(); dragCtx.moved = true; }
+      t.x = snap(w.x-dragCtx.ox); t.y = snap(w.y-dragCtx.oy);
+      render(); return;
+    }
+  }
+  if(mode==='place' || mode==='line') renderOverlay();
+});
+
+svg.addEventListener('pointerup', e => {
+  if(dragCtx && dragCtx.moved) afterChange();
+  dragCtx = null;
+});
+svg.addEventListener('dblclick', e => {
+  e.preventDefault();
+  if(mode === 'line' && draw){
+    // a dupla katt 2 fölös pontot tehet be – az utolsó duplikátumok eltávolítása
+    while(draw.points.length > 1){
+      const a = draw.points[draw.points.length-1], b = draw.points[draw.points.length-2];
+      if(Math.abs(a.x-b.x) < 1 && Math.abs(a.y-b.y) < 1) draw.points.pop(); else break;
+    }
+    finishLine(); return;
+  }
+  const gc = e.target.closest('[data-comp]');
+  const gt = e.target.closest('[data-text]');
+  if(gc){
+    const c = state.comps.find(c => c.id === gc.dataset.comp);
+    const v = prompt('Felirat:', c.label);
+    if(v !== null){ pushHistory(); c.label = v; afterChange(); }
+  } else if(gt){
+    const t = state.texts.find(t => t.id === gt.dataset.text);
+    const v = prompt('Szöveg:', t.text);
+    if(v !== null){ pushHistory(); t.text = v; afterChange(); }
+  }
+});
+svg.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if(mode === 'line' && draw) finishLine();
+});
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  const w = toWorld(e);
+  zoomAt(w.x, w.y, e.deltaY < 0 ? 1.12 : 1/1.12);
+}, {passive:false});
+
+/* ================= Műveletek ================= */
+function deleteSel(){
+  if(!sel) return;
+  pushHistory();
+  if(sel.kind === 'comp'){
+    state.comps = state.comps.filter(c => c.id !== sel.id);
+    for(const l of state.lines) for(const p of l.points)
+      if(p.anchor && p.anchor.comp === sel.id) delete p.anchor;
+  }
+  if(sel.kind === 'line') state.lines = state.lines.filter(l => l.id !== sel.id);
+  if(sel.kind === 'text') state.texts = state.texts.filter(t => t.id !== sel.id);
+  sel = null; afterChange();
+}
+function rotateSel(){
+  if(!sel || sel.kind !== 'comp') return;
+  pushHistory();
+  const c = state.comps.find(c => c.id === sel.id);
+  c.rot = ((c.rot||0)+90) % 360;
+  afterChange();
+}
+function dupSel(){
+  if(!sel || sel.kind !== 'comp') return;
+  pushHistory();
+  const c = state.comps.find(c => c.id === sel.id);
+  const n = Object.assign({}, c, {id:'c'+(state.nextId++), x:c.x+30, y:c.y+30});
+  state.comps.push(n); sel = {kind:'comp', id:n.id}; afterChange();
+}
+
+/* ================= Billentyűk ================= */
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+  const k = e.key.toLowerCase();
+  if(e.ctrlKey || e.metaKey){
+    if(k === 'z'){ e.preventDefault(); undo(); return; }
+    if(k === 'y'){ e.preventDefault(); redo(); return; }
+    if(k === 'd'){ e.preventDefault(); dupSel(); return; }
+    return;
+  }
+  if(k === 'escape'){
+    if(draw){ draw = null; renderOverlay(); }
+    else if(mode !== 'select') setMode('select');
+    else { sel = null; render(); }
+  }
+  if(k === 'enter' && draw){ finishLine(); }
+  if(k === 'delete' || k === 'backspace'){ e.preventDefault(); deleteSel(); }
+  if(k === 'r') rotateSel();
+  if(k === 'v') setMode('select');
+  if(k === 'l') setMode('line');
+  if(k === 't') setMode('text');
+});
+
+/* ================= Export ================= */
+function contentBBox(){
+  let x1=1e9, y1=1e9, x2=-1e9, y2=-1e9;
+  const grow = (x,y) => { x1=Math.min(x1,x); y1=Math.min(y1,y); x2=Math.max(x2,x); y2=Math.max(y2,y); };
+  for(const c of state.comps){
+    const s = SYMBOLS[c.type], m = Math.max(s.w, s.h);
+    grow(c.x-4, c.y-4); grow(c.x+m+4, c.y+m+24);
+  }
+  for(const l of state.lines) for(const p of l.points) grow(p.x, p.y);
+  for(const t of state.texts){ grow(t.x, t.y-t.size); grow(t.x+t.text.length*t.size*0.62, t.y+6); }
+  if(x2 < x1) return {x:0, y:0, w:800, h:600};
+  return {x:x1-30, y:y1-30, w:x2-x1+60, h:y2-y1+60};
+}
+function exportSVGString(){
+  const b = contentBBox();
+  const keep = sel; sel = null;
+  const body = state.lines.map(lineMarkup).join('') +
+               state.comps.map(c=>compMarkup(c,false)).join('') +
+               state.texts.map(textMarkup).join('');
+  sel = keep;
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+b.x+' '+b.y+' '+b.w+' '+b.h+'" width="'+b.w+'" height="'+b.h+'">'+
+    '<rect x="'+b.x+'" y="'+b.y+'" width="'+b.w+'" height="'+b.h+'" fill="#ffffff"/>'+body+'</svg>';
+}
+function download(name, blob){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const fileBase = () => (state.title || 'tervrajz').replace(/[^\wáéíóöőúüűÁÉÍÓÖŐÚÜŰ -]+/g,'').trim().replace(/ +/g,'_') || 'tervrajz';
+
+$('saveBtn').onclick = () => download(fileBase()+'.json',
+  new Blob([JSON.stringify(state, null, 1)], {type:'application/json'}));
+$('openBtn').onclick = () => $('fileInput').click();
+$('fileInput').onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  f.text().then(txt => {
+    try{
+      const st = JSON.parse(txt);
+      if(!Array.isArray(st.comps) || !Array.isArray(st.lines)) throw 0;
+      pushHistory(); state = st; sel = null; afterChange();
+    }catch(err){ alert('Nem sikerült beolvasni: nem érvényes tervrajz fájl.'); }
+    e.target.value = '';
+  });
+};
+$('svgBtn').onclick = () => download(fileBase()+'.svg',
+  new Blob([exportSVGString()], {type:'image/svg+xml'}));
+$('pngBtn').onclick = () => {
+  const str = exportSVGString();
+  const b = contentBBox(), scale = 2;
+  const img = new Image();
+  img.onload = () => {
+    const cv = document.createElement('canvas');
+    cv.width = b.w*scale; cv.height = b.h*scale;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    cv.toBlob(bl => download(fileBase()+'.png', bl), 'image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(str);
+};
+$('printBtn').onclick = () => { zoomFit(); setTimeout(()=>window.print(), 100); };
+$('newBtn').onclick = () => {
+  if(!confirm('Biztosan új, üres rajzot kezdesz? A mostani a böngészőből törlődik (a mentett fájlok megmaradnak).')) return;
+  pushHistory();
+  state = { title:'Névtelen tervrajz', nextId:1, comps:[], lines:[], texts:[] };
+  sel = null; afterChange();
+};
+
+/* ================= UI felépítés ================= */
+(function buildPalette(){
+  const cats = [];
+  for(const key in SYMBOLS){
+    const s = SYMBOLS[key];
+    let c = cats.find(c => c.name === s.cat);
+    if(!c){ c = {name:s.cat, items:[]}; cats.push(c); }
+    c.items.push(key);
+  }
+  const pal = $('palette');
+  pal.innerHTML = cats.map(c =>
+    '<h3>'+c.name+'</h3><div class="pal">' +
+    c.items.map(k => {
+      const s = SYMBOLS[k];
+      const pad = 6, vb = (-pad)+' '+(-pad)+' '+(s.w+2*pad)+' '+(s.h+2*pad);
+      return '<button class="pitem" data-type="'+k+'" title="'+s.name+'">'+
+        '<span class="thumb"><svg viewBox="'+vb+'" preserveAspectRatio="xMidYMid meet">'+s.svg+'</svg></span>'+
+        '<b>'+s.name+'</b></button>';
+    }).join('') + '</div>'
+  ).join('');
+  pal.addEventListener('click', e => {
+    const b = e.target.closest('.pitem'); if(!b) return;
+    placingType = b.dataset.type; setMode('place');
+  });
+})();
+
+(function buildColors(){
+  const g = $('colorGroup');
+  g.innerHTML = COLORS.map((c,i) =>
+    '<button class="swatch'+(i===0?' on':'')+'" data-c="'+c.c+'" title="'+c.n+'" style="background:'+c.c+'"></button>'
+  ).join('');
+  g.addEventListener('click', e => {
+    const b = e.target.closest('.swatch'); if(!b) return;
+    curColor = b.dataset.c;
+    g.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === b));
+    if(sel && sel.kind === 'line'){
+      pushHistory();
+      state.lines.find(l => l.id === sel.id).color = curColor;
+      afterChange();
+    }
+    if(draw) draw.color = curColor;
+    if(mode !== 'line' && !(sel && sel.kind === 'line')) setMode('line');
+  });
+})();
+$('lineWidth').onchange = e => {
+  if(sel && sel.kind === 'line'){ pushHistory();
+    state.lines.find(l => l.id === sel.id).width = +e.target.value; afterChange(); }
+};
+$('lineDash').onchange = e => {
+  if(sel && sel.kind === 'line'){ pushHistory();
+    state.lines.find(l => l.id === sel.id).dash = e.target.value; afterChange(); }
+};
+
+$('mSelect').onclick = () => setMode('select');
+$('mLine').onclick = () => setMode('line');
+$('mText').onclick = () => setMode('text');
+$('orthoBtn').onclick = () => { ortho = !ortho; $('orthoBtn').classList.toggle('on', ortho); };
+$('rotBtn').onclick = rotateSel;
+$('dupBtn').onclick = dupSel;
+$('delBtn').onclick = deleteSel;
+$('undoBtn').onclick = undo;
+$('redoBtn').onclick = redo;
+$('zIn').onclick = () => { const r=svg.getBoundingClientRect(); zoomAt(view.x+r.width/2/view.scale, view.y+r.height/2/view.scale, 1.25); };
+$('zOut').onclick = () => { const r=svg.getBoundingClientRect(); zoomAt(view.x+r.width/2/view.scale, view.y+r.height/2/view.scale, 1/1.25); };
+function zoomFit(){
+  const b = contentBBox(), r = svg.getBoundingClientRect();
+  view.scale = Math.min(3, Math.min(r.width/b.w, r.height/b.h)*0.95);
+  view.x = b.x - (r.width/view.scale - b.w)/2;
+  view.y = b.y - (r.height/view.scale - b.h)/2;
+  applyView();
+}
+$('zFit').onclick = zoomFit;
+$('docTitle').addEventListener('change', e => { state.title = e.target.value; afterChange(); });
+$('helpBtn').onclick = () => $('help').classList.add('open');
+$('helpClose').onclick = () => $('help').classList.remove('open');
+$('help').addEventListener('click', e => { if(e.target === $('help')) $('help').classList.remove('open'); });
+window.addEventListener('resize', applyView);
+
+/* ================= Indulás ================= */
+try{
+  const saved = localStorage.getItem('gepeszterv-v1');
+  if(saved){ const st = JSON.parse(saved);
+    if(st && Array.isArray(st.comps)) state = st; }
+}catch(e){}
+$('docTitle').value = state.title;
+applyView(); setMode('select'); render();
+</script>
+</body>
+</html>
