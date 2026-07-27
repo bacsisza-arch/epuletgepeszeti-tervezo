@@ -35,9 +35,8 @@
     background:var(--bg); color:var(--ink); display:flex; flex-direction:column; overflow:hidden;
   }
   button{font:inherit; color:inherit; background:none; border:none; cursor:pointer}
-  button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
 
-  /* ---------- fejléc / eszköztár ---------- */
   header{
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line);
@@ -47,7 +46,7 @@
   .brand span{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
   #docTitle{
     font:inherit; font-weight:600; color:var(--ink); background:var(--panel2);
-    border:1px solid var(--line); border-radius:6px; padding:5px 9px; width:200px;
+    border:1px solid var(--line); border-radius:6px; padding:5px 9px; width:170px;
   }
   .tgroup{display:flex; align-items:center; gap:4px; padding:3px; background:var(--panel2);
     border:1px solid var(--line); border-radius:8px}
@@ -59,19 +58,19 @@
   .tbtn:hover{background:var(--accent-soft); color:var(--ink)}
   .tbtn.on{background:var(--accent); color:#fff}
   .tbtn.on svg *{stroke:#fff}
+  .tbtn.primary{background:var(--accent); color:#fff; font-weight:600}
+  .tbtn.primary:hover{filter:brightness(1.1)}
   .swatch{width:22px; height:22px; border-radius:50%; border:2px solid transparent; padding:0}
   .swatch.on{border-color:var(--ink); box-shadow:0 0 0 2px var(--panel)}
   select.ctl{
     font:inherit; font-size:12.5px; color:var(--ink); background:var(--panel2);
-    border:1px solid var(--line); border-radius:6px; padding:4px 6px;
+    border:1px solid var(--line); border-radius:6px; padding:4px 6px; max-width:180px;
   }
-  .sep{width:1px; align-self:stretch; background:var(--line); margin:2px 2px}
   .spacer{flex:1}
 
-  /* ---------- törzs ---------- */
   #main{flex:1; display:flex; min-height:0}
   aside{
-    width:216px; flex:none; background:var(--panel); border-right:1px solid var(--line);
+    width:224px; flex:none; background:var(--panel); border-right:1px solid var(--line);
     overflow-y:auto; padding:10px 10px 24px;
   }
   aside h3{
@@ -112,27 +111,50 @@
   footer .hint{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   footer .num{font-variant-numeric:tabular-nums}
 
-  /* ---------- súgó ---------- */
-  #help{
+  .modal{
     position:fixed; inset:0; background:rgba(10,18,28,.55); display:none;
     align-items:center; justify-content:center; z-index:50; padding:20px;
   }
-  #help.open{display:flex}
-  #help .card{
+  .modal.open{display:flex}
+  .modal .card{
     background:var(--panel); border:1px solid var(--line); border-radius:12px;
-    max-width:520px; max-height:85vh; overflow-y:auto; padding:22px 26px; box-shadow:0 10px 40px rgba(0,0,0,.3);
+    max-width:560px; max-height:88vh; overflow-y:auto; padding:22px 26px; box-shadow:0 10px 40px rgba(0,0,0,.3);
   }
-  #help h2{margin:0 0 4px; font-size:17px}
-  #help p{margin:8px 0; font-size:13.5px; line-height:1.55; color:var(--muted)}
-  #help p b{color:var(--ink)}
-  #help kbd{
+  .modal h2{margin:0 0 4px; font-size:17px}
+  .modal p{margin:8px 0; font-size:13.5px; line-height:1.55; color:var(--muted)}
+  .modal p b{color:var(--ink)}
+  .modal kbd{
     font:11px ui-monospace,Menlo,monospace; background:var(--panel2); border:1px solid var(--line);
     border-bottom-width:2px; border-radius:4px; padding:1px 5px; color:var(--ink);
   }
-  #help .close{float:right; font-size:20px; color:var(--muted); padding:0 4px}
+  .modal .close{float:right; font-size:20px; color:var(--muted); padding:0 4px}
+
+  #bom .card{max-width:820px; width:100%}
+  #bom .scalebox{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin:6px 0 12px}
+  #bom .scalebox input{
+    width:70px; font:inherit; color:var(--ink); background:var(--panel2);
+    border:1px solid var(--line); border-radius:6px; padding:4px 7px; font-variant-numeric:tabular-nums;
+  }
+  #bom table{width:100%; border-collapse:collapse; font-size:13px}
+  #bom th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--muted); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--line);
+  }
+  #bom td{padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+  #bom td.num, #bom th.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  #bom tr.sect td{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--accent);
+    font-weight:700; padding-top:14px; border-bottom:none;
+  }
+  #bom tr.total td{font-weight:700; border-top:2px solid var(--ink); border-bottom:none; font-size:14px}
+  #bom .warn{color:var(--danger); font-size:12px}
+  #bom .actions{display:flex; gap:8px; margin-top:16px; flex-wrap:wrap}
+  #bom .actions .tbtn{border:1px solid var(--line); background:var(--panel2)}
+  #bom .actions .tbtn:hover{background:var(--accent-soft)}
+  #bom .empty{color:var(--muted); font-size:13.5px; padding:20px 0}
 
   @media print{
-    header, aside, footer, .zoombox, #help{display:none !important}
+    header, aside, footer, .zoombox, .modal{display:none !important}
     body, #main{overflow:visible}
     #canvasWrap{position:fixed; inset:0; background:#fff}
   }
@@ -159,6 +181,7 @@
   <div class="tgroup" role="group" aria-label="Vezeték színe" id="colorGroup"></div>
 
   <div class="tgroup" role="group" aria-label="Vonal beállítás">
+    <select class="ctl" id="pipeSel" title="Csőtípus – az anyaglistához"></select>
     <select class="ctl" id="lineWidth" title="Vonalvastagság">
       <option value="2">Vékony</option>
       <option value="3" selected>Normál</option>
@@ -173,15 +196,14 @@
   </div>
 
   <div class="tgroup" role="group" aria-label="Szerkesztés">
-    <button class="tbtn" id="rotBtn" title="Elforgatás 90° (R)">⟳ Forgat</button>
+    <button class="tbtn" id="rotBtn" title="Elforgatás 90° (R)">⟳</button>
     <button class="tbtn" id="dupBtn" title="Duplikálás (Ctrl+D)">⧉</button>
-    <button class="tbtn" id="delBtn" title="Törlés (Del)" style="color:var(--danger)">✕ Törlés</button>
-  </div>
-
-  <div class="tgroup" role="group" aria-label="Előzmények">
+    <button class="tbtn" id="delBtn" title="Törlés (Del)" style="color:var(--danger)">✕</button>
     <button class="tbtn" id="undoBtn" title="Visszavonás (Ctrl+Z)">↶</button>
     <button class="tbtn" id="redoBtn" title="Mégis (Ctrl+Y)">↷</button>
   </div>
+
+  <button class="tbtn primary" id="bomBtn" title="Anyaglista összeállítása a rajzból">≡ Anyaglista</button>
 
   <span class="spacer"></span>
 
@@ -234,29 +256,106 @@
   <span class="num" id="coordLbl">0 ; 0</span>
 </footer>
 
-<div id="help" role="dialog" aria-modal="true" aria-label="Súgó">
+<div id="help" class="modal" role="dialog" aria-modal="true" aria-label="Súgó">
   <div class="card">
-    <button class="close" id="helpClose" aria-label="Bezárás">×</button>
+    <button class="close" data-close="help" aria-label="Bezárás">×</button>
     <h2>Hogyan használd?</h2>
     <p><b>Elem elhelyezése:</b> kattints egy elemre a bal oldali tárban, majd kattints a rajzlapra.
-       <kbd>Shift</kbd>-tel több példányt is lerakhatsz egymás után. <kbd>Esc</kbd> megszakítja.</p>
-    <p><b>Vezeték rajzolása:</b> válaszd a <b>Vezeték</b> eszközt (<kbd>L</kbd>) és a színt
-       (piros = fűtés előremenő, kék = visszatérő / hidegvíz, sárga = gáz, narancs = HMV, zöld = egyéb).
-       Kattintgatással törésponttól töréspontig rajzolsz; az elemek csatlakozási pontjaira (kis körök)
-       a vonal rátapad, és az elem mozgatásakor vele megy. Befejezés: <b>dupla kattintás</b>,
-       <kbd>Enter</kbd> vagy jobb gomb. A <b>90°</b> gomb a derékszögű vezetést kapcsolja.</p>
+       Minden elem valós termék a saját árlistádból – az anyaglista ez alapján készül.
+       <kbd>Shift</kbd>-tel több példányt is lerakhatsz. <kbd>Esc</kbd> megszakítja.</p>
+    <p><b>Vezeték rajzolása:</b> válaszd a <b>Vezeték</b> eszközt (<kbd>L</kbd>), a színt
+       (piros = fűtés előremenő, kék = visszatérő / hidegvíz, sárga = gáz, narancs = HMV)
+       és a <b>csőtípust</b> – ebből számolja az anyaglista a méterárakat.
+       Kattintgatással törésponttól töréspontig rajzolsz; az elemek csonkjaira (kis körök)
+       a vezeték rátapad, és az elem mozgatásakor vele megy. A csonk fölé érve a lábléc mutatja
+       a gyári csonk nevét és méretét. Befejezés: <b>dupla kattintás</b> vagy <kbd>Enter</kbd>.</p>
+    <p><b>Anyaglista:</b> az <b>≡ Anyaglista</b> gomb összegyűjti a lerakott berendezéseket,
+       a vezetékek hosszát csőtípusonként (a lépték állítható), és <b>minden bekötött csonkhoz
+       automatikusan elzáró csapot</b> számol (gázcsonkhoz gázcsapot). CSV-be is letölthető.</p>
     <p><b>Mozgatás, szerkesztés:</b> Kijelölés eszközzel (<kbd>V</kbd>) húzd az elemeket.
        <kbd>R</kbd> forgat, <kbd>Del</kbd> töröl, <kbd>Ctrl+D</kbd> duplikál,
-       dupla kattintással átnevezheted az elem feliratát vagy a szöveget.
-       Kijelölt vezeték színe/vastagsága a fenti gombokkal módosítható.</p>
-    <p><b>Nézet:</b> görgővel nagyítasz, üres területet húzva (vagy középső gombbal) mozgatod a rajzlapot.</p>
-    <p><b>Mentés:</b> a rajz automatikusan mentődik a böngészőbe. A <b>Mentés / Megnyitás</b> gombokkal
-       JSON fájlba írhatod ki, az <b>SVG / PNG</b> gombokkal képként exportálhatod.</p>
+       dupla kattintással átnevezheted a feliratot. Kijelölt vezeték színe/csöve/vastagsága
+       a fenti vezérlőkkel módosítható.</p>
+    <p><b>Nézet, mentés:</b> görgővel nagyítasz, üres területet húzva mozgatod a rajzlapot.
+       A rajz automatikusan mentődik a böngészőbe; JSON fájlba is kiírható, SVG/PNG-be exportálható.</p>
+  </div>
+</div>
+
+<div id="bom" class="modal" role="dialog" aria-modal="true" aria-label="Anyaglista">
+  <div class="card">
+    <button class="close" data-close="bom" aria-label="Bezárás">×</button>
+    <h2>Anyaglista</h2>
+    <div class="scalebox">
+      Lépték: 1 nagy rácsnégyzet (100 px) =
+      <input id="scaleInp" type="number" min="0.1" step="0.1" value="1"> m
+      <span>– a csőhosszak ebből számolódnak.</span>
+    </div>
+    <div id="bomBody"></div>
+    <div class="actions">
+      <button class="tbtn" id="bomCsv">⭳ CSV letöltés</button>
+      <button class="tbtn" id="bomCopy">⧉ Másolás vágólapra</button>
+      <button class="tbtn" data-close="bom">Bezárás</button>
+    </div>
   </div>
 </div>
 
 <script>
 'use strict';
+/* ================= Termék-törzs (árlista) =================
+   Az azonosítók és nettó árak a Bácsi Ügyvitel árlistájából származnak. */
+const PRODUCTS = {
+  p_kombi:      {id:'mqzc1x4x83vl7', name:'Bosch Condens 2300i W 24/30 C23 kondenzációs gázkazán, kombi 24 kW', price:277990, unit:'darab'},
+  p_futo:       {id:'mqzc1x4x0e26w', name:'Bosch Condens 2300i W GC2300W 24 P 23 Fali kondenzációs fűtő gázkazán', price:272346, unit:'darab'},
+  p_hp_kult:    {id:'mqzc1x4x86tqq', name:'BOSCH CS3400iAWS 12 OR-S egyfázisú kültéri egység', price:1963000, unit:'darab'},
+  p_hp_belt:    {id:'mqzc15asj9leq', name:'BOSCH AWS 10 B Bivalens Split beltéri egység', price:854300, unit:'darab'},
+  p_hmv:        {id:'mqzc1x4xle70h', name:'BOSCH HP200 2.UNODC 200 l indirekt HMV tároló', price:349600, unit:'darab'},
+  p_puffer:     {id:'mqzc15arftgst', name:'BOSCH AT 200 / 3 bar puffertartály', price:217700, unit:'darab'},
+  p_tagulasi:   {id:'mqzc08s3pd8lf', name:'18 L tágulási tartály fűtésre', price:18500, unit:'darab'},
+  p_hidrvalto:  {id:'mqzc1x4x7sano', name:'BOSCH HW 50 hidraulikus váltó', price:142600, unit:'darab'},
+  p_osztogy:    {id:'mqzc1x4y9vt3g', name:'FORNARA osztó-gyűjtő komplett RSP134/TS134 VE – 7 körös, szivattyús (szivattyú nélkül)', price:171200, unit:'darab'},
+  p_szivattyu:  {id:'mqzc1x4zl52je', name:'Wilo 25/1-6 Fűtési keringető szivattyú', price:73500, unit:'darab'},
+  p_valtoszelep:{id:'mqzc08s3k18zk', name:'1" váltószelep HMV', price:45000, unit:'darab'},
+  p_kevero:     {id:'mqzc1x4y0pkwu', name:'ESBE motoros keverőszelep 1"', price:98500, unit:'darab'},
+  p_biztonsagi: {id:'mqzc08s33atjd', name:'Biztonsági szerelvénycsoport fűtésirendszerhez', price:40550, unit:'darab'},
+  p_szuro:      {id:'mqzc1x4z029p4', name:'Y-szűrő 1"', price:9990, unit:'darab'},
+  p_legtelenito:{id:'mqzc08s3tcb89', name:'Automata légtelenítő', price:4000, unit:'darab'},
+  p_iszap:      {id:'mqzc15as5ldfi', name:'BOSCH iszapleválasztó 1"', price:56200, unit:'darab'},
+  p_legle:      {id:'mqzc15ash4x63', name:'BOSCH légleválasztó 1"', price:39600, unit:'darab'},
+  p_radiator:   {id:'mqzc08s3bg1pr', name:'33K 600X1000 kompakt lapradiátor', price:52603, unit:'darab'},
+  p_termosztat: {id:'mqzc1x4xaitj7', name:'Bosch CRC R-2 termosztát', price:22400, unit:'darab'},
+  p_holl64:     {id:'mqzc1x4z81qmg', name:'Szivattyú hollandi golyós 6/4" X 1"', price:5500, unit:'darab'},
+  gcs_12: {id:'mqzc1x4yhshmy', name:'Golyóscsap 1/2"', price:0, unit:'darab'},
+  gcs_34: {id:'mqzc1x4yp8h7a', name:'Golyóscsap 3/4"', price:4950, unit:'darab'},
+  gcs_1:  {id:'mqzc1x4ys49zh', name:'Golyóscsap 1"', price:4300, unit:'darab'},
+  gcs_54: {id:'mqzc1x4y3rdji', name:'Golyóscsap 5/4"', price:0, unit:'darab'},
+  gcs_64: {id:'mqzc1x4y3s69x', name:'Golyóscsap 6/4"', price:0, unit:'darab'},
+  gaz_12: {id:'mqzc1x4y3u0ds', name:'Gázcsap 1/2" KB Hollandis egyenes', price:0, unit:'darab'},
+  gaz_34: {id:'mqzc1x4y85jpn', name:'Gázcsap 3/4" KB egyenes', price:0, unit:'darab'},
+  gaz_1:  {id:'mqzc1x4y2nvm7', name:'Gázcsap 1" KB Hollandis egyenes', price:0, unit:'darab'}
+};
+const GOLYOSCSAP = {'1/2"':'gcs_12','3/4"':'gcs_34','1"':'gcs_1','5/4"':'gcs_54','6/4"':'gcs_64'};
+const GAZCSAP    = {'1/2"':'gaz_12','3/4"':'gaz_34','1"':'gaz_1'};
+
+/* ================= Csőtípusok (méterár az árlistából) ================= */
+const PIPES = {
+  otreteg16:{name:'Ötrétegű cső 16x2',            price:2000, grp:'Ötrétegű'},
+  otreteg20:{name:'Ötrétegű cső 20x2',            price:2600, grp:'Ötrétegű'},
+  otreteg26:{name:'Ötrétegű cső 26x3',            price:3300, grp:'Ötrétegű'},
+  otreteg40:{name:'Ötrétegű cső 40x3,5',          price:5850, grp:'Ötrétegű'},
+  rez15:    {name:'Rézcső kemény 15 mm',          price:0,    grp:'Rézcső'},
+  rez18:    {name:'Rézcső kemény 18 mm',          price:0,    grp:'Rézcső'},
+  rez22:    {name:'Rézcső kemény 22 mm',          price:0,    grp:'Rézcső'},
+  rez28:    {name:'Rézcső kemény 28 mm',          price:0,    grp:'Rézcső'},
+  szenacel20:{name:'Szénacél cső NA20',           price:2250, grp:'Szénacél / inox'},
+  szenacel32:{name:'Szénacél cső NA32',           price:3000, grp:'Szénacél / inox'},
+  inox20:   {name:'INOX cső NA20',                price:2980, grp:'Szénacél / inox'},
+  inox25:   {name:'INOX cső NA25',                price:3550, grp:'Szénacél / inox'},
+  gaz20:    {name:'Gázcső (szereléssel) NA20',    price:10000,grp:'Gáz'},
+  gaz25:    {name:'Gázcső (szereléssel) NA25',    price:10000,grp:'Gáz'},
+  pert16:   {name:'Padlófűtéscső PE-Rt 16x2',     price:280,  grp:'Egyéb'},
+  kpe25:    {name:'KPE cső víz 25 mm PE100 PN16', price:366,  grp:'Egyéb'}
+};
+
 /* ================= Jelkulcs – szimbólumok ================= */
 const INK = '#243447';
 const S2 = 'stroke="'+INK+'" stroke-width="2" fill="none"';
@@ -268,150 +367,213 @@ function fan(cx,cy,r){
     '<path d="M'+cx+' '+cy+' q'+(r*0.7)+' -'+(r*0.9)+' 0 -'+r+'M'+cx+' '+cy+' q'+(r*0.55)+' '+(r*0.85)+' '+(r*0.87)+' '+(r*0.5)+'M'+cx+' '+cy+' q-'+(r*1.05)+' '+(r*0.1)+' -'+(r*0.87)+' '+(r*0.5)+'" '+S2+'/>' +
     '<circle cx="'+cx+'" cy="'+cy+'" r="2.5" fill="'+INK+'"/>';
 }
-function bowtie(x,y,w,h){ // vízszintes szelep-test, (x,y) bal felső
+function bowtie(x,y,w,h){
   const cx=x+w/2, cy=y+h/2;
   return '<path d="M'+x+' '+y+' L'+cx+' '+cy+' L'+x+' '+(y+h)+' Z M'+(x+w)+' '+y+' L'+cx+' '+cy+' L'+(x+w)+' '+(y+h)+' Z" '+S2F+'/>';
 }
+function boilerBody(labels){
+  let m = '<rect x="1" y="10" width="108" height="75" rx="5" '+S2F+'/>' +
+    '<rect x="46" y="1" width="18" height="9" '+S2F+'/>' +
+    '<path d="M55 22 C46 38 48 50 55 57 C62 50 64 38 55 22 Z" '+S2+'/>' +
+    '<path d="M55 38 C51 46 52 52 55 55 C58 52 59 46 55 38 Z" fill="'+INK+'"/>' +
+    '<line x1="1" y1="70" x2="109" y2="70" '+S2+'/>';
+  const xs = [15,35,55,75,95];
+  for(let i=0;i<5;i++){
+    m += '<line x1="'+xs[i]+'" y1="85" x2="'+xs[i]+'" y2="100" '+S2+'/>' +
+         '<text x="'+xs[i]+'" y="80.5" font-size="6.5" '+TXT+'>'+labels[i]+'</text>';
+  }
+  return m;
+}
 
 const SYMBOLS = {
-  kazan_fali:{ name:'Gázkazán (fali)', cat:'Hőtermelők', w:80, h:96,
-    ports:[[20,96],[60,96],[40,96],[40,0]],
-    svg:'<rect x="1" y="1" width="78" height="94" rx="6" '+S2F+'/>' +
-        '<path d="M40 26 C29 44 31 58 40 66 C49 58 51 44 40 26 Z" '+S2+'/>' +
-        '<path d="M40 44 C36 52 37 58 40 61 C43 58 44 52 40 44 Z" fill="'+INK+'"/>' +
-        '<line x1="1" y1="80" x2="79" y2="80" '+S2+'/>' },
-  kazan_allo:{ name:'Kazán (álló)', cat:'Hőtermelők', w:80, h:90,
-    ports:[[0,20],[0,70],[80,20],[40,0]],
-    svg:'<rect x="1" y="9" width="78" height="80" rx="8" '+S2F+'/>' +
-        '<rect x="30" y="1" width="20" height="8" '+S2F+'/>' +
-        '<path d="M40 34 C31 48 33 60 40 66 C47 60 49 48 40 34 Z" '+S2+'/>' },
-  hp_kulteri:{ name:'Hőszivattyú kültéri', cat:'Hőtermelők', w:104, h:70,
-    ports:[[104,22],[104,48]],
+  kazan_kombi:{ name:'Kombi kazán', cat:'Hőtermelők', w:110, h:100, prod:'p_kombi', valves:true,
+    ports:[
+      {x:15,y:100,n:'Fűtés előremenő',s:'3/4"',f:'futes'},
+      {x:35,y:100,n:'Melegvíz (HMV) kilépő',s:'1/2"',f:'hmv'},
+      {x:55,y:100,n:'Gázcsatlakozás',s:'3/4"',f:'gaz'},
+      {x:75,y:100,n:'Hidegvíz belépő',s:'1/2"',f:'hideg'},
+      {x:95,y:100,n:'Fűtés visszatérő',s:'3/4"',f:'futes'},
+      {x:55,y:0,n:'Égéstermék-elvezetés 60/100',s:'60/100',f:'fust'}],
+    svg:boilerBody(['FE','HMV','GÁZ','HV','FV']) },
+  kazan_futo:{ name:'Fűtő kazán', cat:'Hőtermelők', w:110, h:100, prod:'p_futo', valves:true,
+    ports:[
+      {x:15,y:100,n:'Fűtés előremenő',s:'3/4"',f:'futes'},
+      {x:35,y:100,n:'Tároló előremenő',s:'3/4"',f:'futes'},
+      {x:55,y:100,n:'Gázcsatlakozás',s:'3/4"',f:'gaz'},
+      {x:75,y:100,n:'Tároló visszatérő',s:'3/4"',f:'futes'},
+      {x:95,y:100,n:'Fűtés visszatérő',s:'3/4"',f:'futes'},
+      {x:55,y:0,n:'Égéstermék-elvezetés 60/100',s:'60/100',f:'fust'}],
+    svg:boilerBody(['FE','TE','GÁZ','TV','FV']) },
+  hp_kulteri:{ name:'Hőszivattyú kültéri', cat:'Hőtermelők', w:104, h:70, prod:'p_hp_kult', valves:true,
+    ports:[{x:104,y:22,n:'Fűtési előremenő',s:'1"',f:'futes'},{x:104,y:48,n:'Fűtési visszatérő',s:'1"',f:'futes'}],
     svg:'<rect x="1" y="1" width="102" height="68" rx="5" '+S2F+'/>' +
         fan(34,35,22) +
         '<line x1="66" y1="10" x2="66" y2="60" '+S2+'/>' +
         '<line x1="76" y1="14" x2="96" y2="14" '+S2+'/><line x1="76" y1="26" x2="96" y2="26" '+S2+'/>' +
         '<line x1="76" y1="38" x2="96" y2="38" '+S2+'/><line x1="76" y1="50" x2="96" y2="50" '+S2+'/>' },
-  hp_belteri:{ name:'Hőszivattyú beltéri', cat:'Hőtermelők', w:78, h:92,
-    ports:[[0,24],[0,46],[20,92],[58,92]],
+  hp_belteri:{ name:'Hőszivattyú beltéri', cat:'Hőtermelők', w:78, h:92, prod:'p_hp_belt', valves:true,
+    ports:[
+      {x:0,y:24,n:'Fűtési előremenő',s:'1"',f:'futes'},
+      {x:0,y:46,n:'Fűtési visszatérő',s:'1"',f:'futes'},
+      {x:20,y:92,n:'Melegvíz (HMV)',s:'3/4"',f:'hmv'},
+      {x:58,y:92,n:'Hidegvíz belépő',s:'3/4"',f:'hideg'}],
     svg:'<rect x="1" y="1" width="76" height="90" rx="6" '+S2F+'/>' +
         '<circle cx="39" cy="34" r="17" '+S2+'/>' +
         '<path d="M39 20 v28 M27 27l24 14 M27 41l24-14" '+S2+'/>' +
         '<line x1="1" y1="66" x2="77" y2="66" '+S2+'/>' +
         '<text x="39" y="83" font-size="11" '+TXT+'>hidro</text>' },
-  napkollektor:{ name:'Napkollektor', cat:'Hőtermelők', w:96, h:62,
-    ports:[[0,52],[96,10]],
+  napkollektor:{ name:'Napkollektor', cat:'Hőtermelők', w:96, h:62, prod:null, valves:false,
+    ports:[{x:0,y:52,n:'Szolár visszatérő',s:'3/4"',f:'futes'},{x:96,y:10,n:'Szolár előremenő',s:'3/4"',f:'futes'}],
     svg:'<rect x="1" y="1" width="94" height="60" '+S2F+'/>' +
         '<path d="M24 61 L64 1 M44 61 L84 1 M8 45 L37 1 M64 61 L94 16" '+S2+'/>' },
 
-  puffer:{ name:'Puffertartály', cat:'Tárolók, elosztás', w:70, h:112,
-    ports:[[0,24],[0,92],[70,24],[70,92]],
-    svg:'<rect x="1" y="1" width="68" height="110" rx="16" '+S2F+'/>' +
-        '<path d="M14 40 q21 12 42 0 M14 66 q21 12 42 0" stroke="'+INK+'" stroke-width="1.4" fill="none" stroke-dasharray="4 4"/>' },
-  hmv:{ name:'HMV tároló', cat:'Tárolók, elosztás', w:72, h:110,
-    ports:[[0,34],[0,84],[36,0],[72,96]],
-    svg:'<rect x="1" y="1" width="70" height="108" rx="16" '+S2F+'/>' +
-        '<path d="M14 36 c30 0 30 14 0 14 c30 0 30 14 0 14 c30 0 30 14 0 14" '+S2+'/>' },
-  tagulasi:{ name:'Tágulási tartály', cat:'Tárolók, elosztás', w:48, h:58,
-    ports:[[24,58]],
+  hmv:{ name:'HMV tároló 200 l', cat:'Tárolók, elosztás', w:84, h:120, prod:'p_hmv', valves:true,
+    ports:[
+      {x:0,y:45,n:'Fűtőköri előremenő (hőcserélő be)',s:'1"',f:'futes'},
+      {x:0,y:85,n:'Fűtőköri visszatérő (hőcserélő ki)',s:'1"',f:'futes'},
+      {x:42,y:0,n:'Melegvíz kilépő',s:'3/4"',f:'hmv'},
+      {x:84,y:60,n:'Cirkuláció',s:'3/4"',f:'hmv'},
+      {x:84,y:100,n:'Hidegvíz belépő',s:'3/4"',f:'hideg'}],
+    svg:'<rect x="6" y="8" width="72" height="110" rx="16" '+S2F+'/>' +
+        '<line x1="42" y1="8" x2="42" y2="0" '+S2+'/>' +
+        '<line x1="6" y1="45" x2="0" y2="45" '+S2+'/><line x1="6" y1="85" x2="0" y2="85" '+S2+'/>' +
+        '<line x1="78" y1="60" x2="84" y2="60" '+S2+'/><line x1="78" y1="100" x2="84" y2="100" '+S2+'/>' +
+        '<path d="M20 42 c28 0 28 13 0 13 c28 0 28 13 0 13 c28 0 28 13 0 13" '+S2+'/>' +
+        '<text x="15" y="42" font-size="6.5" '+TXT+'>FE</text><text x="15" y="96" font-size="6.5" '+TXT+'>FV</text>' +
+        '<text x="70" y="57" font-size="6.5" '+TXT+'>C</text><text x="69" y="97" font-size="6.5" '+TXT+'>HV</text>' +
+        '<text x="53" y="7" font-size="6.5" '+TXT+'>MV</text>' },
+  puffer:{ name:'Puffertartály 200 l', cat:'Tárolók, elosztás', w:76, h:116, prod:'p_puffer', valves:true,
+    ports:[
+      {x:0,y:24,n:'Előremenő be (felül)',s:'1"',f:'futes'},
+      {x:0,y:92,n:'Visszatérő ki (alul)',s:'1"',f:'futes'},
+      {x:76,y:24,n:'Előremenő ki (felül)',s:'1"',f:'futes'},
+      {x:76,y:92,n:'Visszatérő be (alul)',s:'1"',f:'futes'}],
+    svg:'<rect x="4" y="1" width="68" height="114" rx="16" '+S2F+'/>' +
+        '<line x1="4" y1="24" x2="0" y2="24" '+S2+'/><line x1="4" y1="92" x2="0" y2="92" '+S2+'/>' +
+        '<line x1="72" y1="24" x2="76" y2="24" '+S2+'/><line x1="72" y1="92" x2="76" y2="92" '+S2+'/>' +
+        '<path d="M18 46 q20 12 40 0 M18 72 q20 12 40 0" stroke="'+INK+'" stroke-width="1.4" fill="none" stroke-dasharray="4 4"/>' },
+  tagulasi:{ name:'Tágulási tartály 18 l', cat:'Tárolók, elosztás', w:48, h:58, prod:'p_tagulasi', valves:true,
+    ports:[{x:24,y:58,n:'Csatlakozás',s:'3/4"',f:'futes',nv:true}],
     svg:'<circle cx="24" cy="25" r="23" '+S2F+'/>' +
         '<path d="M2 25 q11 8 22 0 q11 -8 22 0" '+S2+'/>' +
         '<line x1="24" y1="48" x2="24" y2="58" '+S2+'/>' },
-  hidr_valto:{ name:'Hidraulikus váltó', cat:'Tárolók, elosztás', w:30, h:104,
-    ports:[[0,18],[0,86],[30,18],[30,86]],
+  hidr_valto:{ name:'Hidraulikus váltó', cat:'Tárolók, elosztás', w:30, h:104, prod:'p_hidrvalto', valves:true,
+    ports:[
+      {x:0,y:18,n:'Primer előremenő',s:'1"',f:'futes'},
+      {x:0,y:86,n:'Primer visszatérő',s:'1"',f:'futes'},
+      {x:30,y:18,n:'Szekunder előremenő',s:'1"',f:'futes'},
+      {x:30,y:86,n:'Szekunder visszatérő',s:'1"',f:'futes'}],
     svg:'<rect x="1" y="1" width="28" height="102" rx="8" '+S2F+'/>' },
-  hocserelo:{ name:'Hőcserélő', cat:'Tárolók, elosztás', w:48, h:68,
-    ports:[[0,14],[0,54],[48,14],[48,54]],
-    svg:'<rect x="1" y="1" width="46" height="66" '+S2F+'/>' +
-        '<path d="M1 1 L47 67 M47 1 L1 67" '+S2+'/>' },
-  osztogyujto:{ name:'Osztó-gyűjtő', cat:'Tárolók, elosztás', w:128, h:44,
-    ports:[[0,10],[0,34],[34,0],[64,0],[94,0],[34,44],[64,44],[94,44]],
+  osztogyujto:{ name:'Osztó-gyűjtő (7 körös)', cat:'Tárolók, elosztás', w:128, h:44, prod:'p_osztogy', valves:true,
+    ports:[
+      {x:0,y:10,n:'Előremenő betáp',s:'1"',f:'futes'},
+      {x:0,y:34,n:'Visszatérő betáp',s:'1"',f:'futes'},
+      {x:34,y:0,n:'Fűtési kör (előremenő)',s:'3/4"',f:'futes',nv:true},
+      {x:64,y:0,n:'Fűtési kör (előremenő)',s:'3/4"',f:'futes',nv:true},
+      {x:94,y:0,n:'Fűtési kör (előremenő)',s:'3/4"',f:'futes',nv:true},
+      {x:34,y:44,n:'Fűtési kör (visszatérő)',s:'3/4"',f:'futes',nv:true},
+      {x:64,y:44,n:'Fűtési kör (visszatérő)',s:'3/4"',f:'futes',nv:true},
+      {x:94,y:44,n:'Fűtési kör (visszatérő)',s:'3/4"',f:'futes',nv:true}],
     svg:'<rect x="1" y="4" width="126" height="12" rx="5" '+S2F+'/>' +
         '<rect x="1" y="28" width="126" height="12" rx="5" '+S2F+'/>' +
         '<path d="M34 4v-4 M64 4v-4 M94 4v-4 M34 40v4 M64 40v4 M94 40v4" '+S2+'/>' },
 
-  szivattyu:{ name:'Szivattyú', cat:'Szerelvények', w:44, h:44,
-    ports:[[0,22],[44,22]],
+  szivattyu:{ name:'Szivattyú', cat:'Szerelvények', w:44, h:44, prod:'p_szivattyu', valves:true, valveProd:'p_holl64',
+    ports:[{x:0,y:22,n:'Szívóoldal',s:'6/4"',f:'futes'},{x:44,y:22,n:'Nyomóoldal',s:'6/4"',f:'futes'}],
     svg:'<circle cx="22" cy="22" r="20" '+S2F+'/>' +
         '<path d="M12 10 L38 22 L12 34 Z" '+S2+'/>' },
-  valtoszelep:{ name:'Váltószelep (3j)', cat:'Szerelvények', w:48, h:58,
-    ports:[[0,34],[48,34],[24,58]],
+  valtoszelep:{ name:'Váltószelep (3j)', cat:'Szerelvények', w:48, h:58, prod:'p_valtoszelep', valves:false,
+    ports:[{x:0,y:34,n:'AB csonk',s:'1"',f:'futes'},{x:48,y:34,n:'A csonk',s:'1"',f:'futes'},{x:24,y:58,n:'B csonk',s:'1"',f:'futes'}],
     svg:'<path d="M1 24 L24 34 L1 44 Z M47 24 L24 34 L47 44 Z" '+S2F+'/>' +
         '<path d="M14 47 L24 34 L34 47 Z" stroke="'+INK+'" stroke-width="2" fill="'+INK+'" transform="translate(0,10)"/>' +
         '<line x1="24" y1="34" x2="24" y2="16" '+S2+'/>' +
         '<rect x="14" y="1" width="20" height="15" '+S2F+'/>' +
         '<text x="24" y="12.5" font-size="11" '+TXT+'>M</text>' },
-  keveroszelep:{ name:'Keverőszelep (3j)', cat:'Szerelvények', w:48, h:58,
-    ports:[[0,34],[48,34],[24,58]],
+  keveroszelep:{ name:'Keverőszelep (3j)', cat:'Szerelvények', w:48, h:58, prod:'p_kevero', valves:false,
+    ports:[{x:0,y:34,n:'A csonk',s:'1"',f:'futes'},{x:48,y:34,n:'AB csonk',s:'1"',f:'futes'},{x:24,y:58,n:'B csonk',s:'1"',f:'futes'}],
     svg:'<path d="M1 24 L24 34 L1 44 Z M47 24 L24 34 L47 44 Z M14 57 L24 34 L34 57 Z" '+S2F+'/>' +
         '<line x1="24" y1="34" x2="24" y2="16" '+S2+'/>' +
         '<rect x="14" y="1" width="20" height="15" '+S2F+'/>' +
         '<text x="24" y="12.5" font-size="11" '+TXT+'>M</text>' +
         '<path d="M8 52 a18 18 0 0 1 10 -12" stroke="'+INK+'" stroke-width="1.6" fill="none"/>' +
         '<path d="M16 38 l3 2 l-3.5 2 Z" fill="'+INK+'"/>' },
-  golyoscsap:{ name:'Golyóscsap', cat:'Szerelvények', w:44, h:24,
-    ports:[[0,12],[44,12]],
+  golyoscsap:{ name:'Golyóscsap', cat:'Szerelvények', w:44, h:24, prod:'gcs_34', valves:false,
+    ports:[{x:0,y:12,n:'Csatlakozás',s:'3/4"',f:'futes'},{x:44,y:12,n:'Csatlakozás',s:'3/4"',f:'futes'}],
     svg:bowtie(1,1,42,22) + '<circle cx="22" cy="12" r="5.5" '+S2F+'/>' },
-  visszacsapo:{ name:'Visszacsapó szelep', cat:'Szerelvények', w:44, h:24,
-    ports:[[0,12],[44,12]],
+  gazcsap:{ name:'Gázcsap', cat:'Szerelvények', w:44, h:32, prod:'gaz_34', valves:false,
+    ports:[{x:0,y:21,n:'Csatlakozás',s:'3/4"',f:'gaz'},{x:44,y:21,n:'Csatlakozás',s:'3/4"',f:'gaz'}],
+    svg:bowtie(1,10,42,22) +
+        '<line x1="22" y1="21" x2="22" y2="4" '+S2+'/>' +
+        '<line x1="14" y1="4" x2="30" y2="4" '+S2+'/>' },
+  visszacsapo:{ name:'Visszacsapó szelep', cat:'Szerelvények', w:44, h:24, prod:null, valves:false,
+    ports:[{x:0,y:12,n:'Belépő',s:'3/4"',f:'futes'},{x:44,y:12,n:'Kilépő',s:'3/4"',f:'futes'}],
     svg:'<path d="M1 1 L22 12 L1 23 Z" '+S2F+'/>' +
         '<path d="M43 1 L22 12 L43 23 Z" stroke="'+INK+'" stroke-width="2" fill="'+INK+'"/>' },
-  biztonsagi:{ name:'Biztonsági szelep', cat:'Szerelvények', w:44, h:46,
-    ports:[[0,34],[44,34]],
+  biztonsagi:{ name:'Biztonsági szelep', cat:'Szerelvények', w:44, h:46, prod:'p_biztonsagi', valves:false,
+    ports:[{x:0,y:34,n:'Belépő',s:'3/4"',f:'futes'},{x:44,y:34,n:'Lefúvató',s:'3/4"',f:'futes'}],
     svg:bowtie(1,23,42,22) +
         '<line x1="22" y1="34" x2="22" y2="18" '+S2+'/>' +
         '<path d="M14 18 l16 -4 l-16 -4 l16 -4" '+S2+'/>' },
-  szuro:{ name:'Szűrő', cat:'Szerelvények', w:44, h:34,
-    ports:[[0,8],[44,8]],
+  szuro:{ name:'Szűrő (Y)', cat:'Szerelvények', w:44, h:34, prod:'p_szuro', valves:false,
+    ports:[{x:0,y:8,n:'Belépő',s:'1"',f:'futes'},{x:44,y:8,n:'Kilépő',s:'1"',f:'futes'}],
     svg:'<line x1="0" y1="8" x2="44" y2="8" '+S2+'/>' +
         '<path d="M14 8 L26 30 L34 26" '+S2+'/>' +
         '<line x1="22" y1="21" x2="30" y2="17" stroke="'+INK+'" stroke-width="1.5"/>' },
-  magnesszelep:{ name:'Mágnesszelep', cat:'Szerelvények', w:44, h:42,
-    ports:[[0,30],[44,30]],
-    svg:bowtie(1,19,42,22) +
-        '<line x1="22" y1="30" x2="22" y2="12" '+S2+'/>' +
-        '<rect x="13" y="1" width="18" height="11" '+S2F+'/>' +
-        '<text x="22" y="10" font-size="9" '+TXT+'>S</text>' },
-
-  radiator:{ name:'Radiátor', cat:'Hőleadók', w:92, h:58,
-    ports:[[0,10],[92,48]],
-    svg:'<rect x="1" y="1" width="90" height="56" '+S2F+'/>' +
-        '<path d="M13 1v56 M25 1v56 M37 1v56 M49 1v56 M61 1v56 M73 1v56 M85 1v56" stroke="'+INK+'" stroke-width="1.4"/>' },
-  padlofutes:{ name:'Padlófűtés kör', cat:'Hőleadók', w:92, h:62,
-    ports:[[0,14],[0,40]],
-    svg:'<rect x="1" y="1" width="90" height="60" rx="4" '+S2F+'/>' +
-        '<path d="M1 14 H78 a8 8 0 0 1 0 16 H24 a7 7 0 0 0 0 14 H60" '+S2+'/>' +
-        '<path d="M60 40 l8 4 l-8 4" transform="translate(0,0)" stroke="'+INK+'" stroke-width="1.6" fill="none"/>' },
-  fancoil:{ name:'Fan-coil', cat:'Hőleadók', w:84, h:54,
-    ports:[[18,54],[62,54]],
-    svg:'<rect x="1" y="1" width="82" height="52" rx="5" '+S2F+'/>' + fan(28,27,16) +
-        '<path d="M54 8v38 M64 8v38 M74 8v38" stroke="'+INK+'" stroke-width="1.4"/>' },
-
-  homero:{ name:'Hőmérő', cat:'Mérés, egyéb', w:28, h:40,
-    ports:[[14,40]],
-    svg:'<circle cx="14" cy="14" r="13" '+S2F+'/>' +
-        '<text x="14" y="19" font-size="13" '+TXT+'>T</text>' +
-        '<line x1="14" y1="27" x2="14" y2="40" '+S2+'/>' },
-  nyomasmero:{ name:'Nyomásmérő', cat:'Mérés, egyéb', w:28, h:40,
-    ports:[[14,40]],
-    svg:'<circle cx="14" cy="14" r="13" '+S2F+'/>' +
-        '<text x="14" y="19" font-size="13" '+TXT+'>P</text>' +
-        '<line x1="14" y1="27" x2="14" y2="40" '+S2+'/>' },
-  gazora:{ name:'Gázmérő', cat:'Mérés, egyéb', w:56, h:42,
-    ports:[[8,0],[48,0]],
-    svg:'<rect x="1" y="9" width="54" height="32" rx="4" '+S2F+'/>' +
-        '<path d="M8 9V0 M48 9V0" '+S2+'/>' +
-        '<text x="28" y="30" font-size="12" '+TXT+'>GÁZ</text>' },
-  legtelenito:{ name:'Légtelenítő', cat:'Mérés, egyéb', w:24, h:34,
-    ports:[[12,34]],
+  iszaplevalaszto:{ name:'Iszapleválasztó', cat:'Szerelvények', w:44, h:44, prod:'p_iszap', valves:false,
+    ports:[{x:0,y:10,n:'Belépő',s:'1"',f:'futes'},{x:44,y:10,n:'Kilépő',s:'1"',f:'futes'}],
+    svg:'<line x1="0" y1="10" x2="44" y2="10" '+S2+'/>' +
+        '<rect x="14" y="18" width="16" height="22" rx="4" '+S2F+'/>' +
+        '<line x1="22" y1="10" x2="22" y2="18" '+S2+'/>' +
+        '<line x1="18" y1="34" x2="26" y2="34" stroke="'+INK+'" stroke-width="1.5"/>' },
+  leglevalaszto:{ name:'Légleválasztó', cat:'Szerelvények', w:44, h:44, prod:'p_legle', valves:false,
+    ports:[{x:0,y:34,n:'Belépő',s:'1"',f:'futes'},{x:44,y:34,n:'Kilépő',s:'1"',f:'futes'}],
+    svg:'<line x1="0" y1="34" x2="44" y2="34" '+S2+'/>' +
+        '<rect x="14" y="4" width="16" height="22" rx="4" '+S2F+'/>' +
+        '<circle cx="22" cy="2.5" r="2.5" '+S2+'/>' +
+        '<line x1="22" y1="26" x2="22" y2="34" '+S2+'/>' },
+  legtelenito:{ name:'Légtelenítő', cat:'Szerelvények', w:24, h:34, prod:'p_legtelenito', valves:false,
+    ports:[{x:12,y:34,n:'Csatlakozás',s:'1/2"',f:'futes',nv:true}],
     svg:'<circle cx="12" cy="12" r="10" '+S2F+'/>' +
         '<path d="M6 12 a6 6 0 0 1 12 0" '+S2+'/>' +
         '<line x1="12" y1="22" x2="12" y2="34" '+S2+'/>' },
-  termosztat:{ name:'Termosztát', cat:'Mérés, egyéb', w:34, h:34,
-    ports:[[17,34]],
+
+  radiator:{ name:'Radiátor 600×1000', cat:'Hőleadók', w:92, h:58, prod:'p_radiator', valves:true,
+    ports:[{x:0,y:10,n:'Előremenő',s:'1/2"',f:'futes'},{x:92,y:48,n:'Visszatérő',s:'1/2"',f:'futes'}],
+    svg:'<rect x="1" y="1" width="90" height="56" '+S2F+'/>' +
+        '<path d="M13 1v56 M25 1v56 M37 1v56 M49 1v56 M61 1v56 M73 1v56 M85 1v56" stroke="'+INK+'" stroke-width="1.4"/>' },
+  padlofutes:{ name:'Padlófűtés kör', cat:'Hőleadók', w:92, h:62, prod:null, valves:false,
+    ports:[{x:0,y:14,n:'Előremenő',s:'16x2',f:'futes'},{x:0,y:40,n:'Visszatérő',s:'16x2',f:'futes'}],
+    svg:'<rect x="1" y="1" width="90" height="60" rx="4" '+S2F+'/>' +
+        '<path d="M1 14 H78 a8 8 0 0 1 0 16 H24 a7 7 0 0 0 0 14 H60" '+S2+'/>' +
+        '<path d="M60 40 l8 4 l-8 4" stroke="'+INK+'" stroke-width="1.6" fill="none"/>' },
+  fancoil:{ name:'Fan-coil', cat:'Hőleadók', w:84, h:54, prod:null, valves:true,
+    ports:[{x:18,y:54,n:'Előremenő',s:'3/4"',f:'futes'},{x:62,y:54,n:'Visszatérő',s:'3/4"',f:'futes'}],
+    svg:'<rect x="1" y="1" width="82" height="52" rx="5" '+S2F+'/>' + fan(28,27,16) +
+        '<path d="M54 8v38 M64 8v38 M74 8v38" stroke="'+INK+'" stroke-width="1.4"/>' },
+
+  homero:{ name:'Hőmérő', cat:'Mérés, egyéb', w:28, h:40, prod:null, valves:false,
+    ports:[{x:14,y:40,n:'Csatlakozás',s:'1/2"',f:'futes',nv:true}],
+    svg:'<circle cx="14" cy="14" r="13" '+S2F+'/>' +
+        '<text x="14" y="19" font-size="13" '+TXT+'>T</text>' +
+        '<line x1="14" y1="27" x2="14" y2="40" '+S2+'/>' },
+  nyomasmero:{ name:'Nyomásmérő', cat:'Mérés, egyéb', w:28, h:40, prod:null, valves:false,
+    ports:[{x:14,y:40,n:'Csatlakozás',s:'1/2"',f:'futes',nv:true}],
+    svg:'<circle cx="14" cy="14" r="13" '+S2F+'/>' +
+        '<text x="14" y="19" font-size="13" '+TXT+'>P</text>' +
+        '<line x1="14" y1="27" x2="14" y2="40" '+S2+'/>' },
+  gazora:{ name:'Gázmérő', cat:'Mérés, egyéb', w:56, h:42, prod:null, valves:true,
+    ports:[{x:8,y:0,n:'Gáz belépő',s:'1"',f:'gaz'},{x:48,y:0,n:'Gáz kilépő',s:'1"',f:'gaz'}],
+    svg:'<rect x="1" y="9" width="54" height="32" rx="4" '+S2F+'/>' +
+        '<path d="M8 9V0 M48 9V0" '+S2+'/>' +
+        '<text x="28" y="30" font-size="12" '+TXT+'>GÁZ</text>' },
+  termosztat:{ name:'Termosztát', cat:'Mérés, egyéb', w:34, h:34, prod:'p_termosztat', valves:false,
+    ports:[],
     svg:'<rect x="1" y="1" width="32" height="32" rx="6" '+S2F+'/>' +
         '<text x="17" y="22" font-size="12" '+TXT+'>T°</text>' }
 };
+
+/* Régi mentések elemtípusainak átvezetése */
+const MIGRATE = { kazan_fali:'kazan_kombi', kazan_allo:'kazan_futo', hocserelo:null, magnesszelep:null };
 
 /* ================= Vezeték-színek ================= */
 const COLORS = [
@@ -424,12 +586,12 @@ const COLORS = [
 ];
 
 /* ================= Állapot ================= */
-let state = { title:'Névtelen tervrajz', nextId:1, comps:[], lines:[], texts:[] };
+let state = { title:'Névtelen tervrajz', nextId:1, scale:1, comps:[], lines:[], texts:[] };
 let view = { x:-40, y:-40, scale:1 };
-let mode = 'select';           // select | line | text | place
+let mode = 'select';
 let placingType = null;
-let sel = null;                // {kind:'comp'|'line'|'text', id}
-let draw = null;               // folyamatban lévő vezeték {color,width,dash,points:[...]}
+let sel = null;
+let draw = null;
 let curColor = COLORS[0].c, ortho = true;
 let undoStack = [], redoStack = [];
 let mouse = {x:0, y:0};
@@ -462,7 +624,7 @@ function zoomAt(cx, cy, f){
 function portWorld(comp, i){
   const s = SYMBOLS[comp.type], p = s.ports[i];
   const cx = s.w/2, cy = s.h/2, a = (comp.rot||0)*Math.PI/180;
-  const dx = p[0]-cx, dy = p[1]-cy;
+  const dx = p.x-cx, dy = p.y-cy;
   return { x: comp.x+cx + dx*Math.cos(a) - dy*Math.sin(a),
            y: comp.y+cy + dx*Math.sin(a) + dy*Math.cos(a) };
 }
@@ -473,7 +635,7 @@ function nearestPort(wx, wy){
     for(let i=0;i<s.ports.length;i++){
       const p = portWorld(c,i);
       const d = Math.hypot(p.x-wx, p.y-wy);
-      if(d < bd){ bd = d; best = {comp:c.id, port:i, x:p.x, y:p.y}; }
+      if(d < bd){ bd = d; best = {comp:c.id, port:i, x:p.x, y:p.y, def:s.ports[i], label:c.label}; }
     }
   }
   return best;
@@ -482,7 +644,9 @@ function syncAnchors(){
   for(const l of state.lines) for(const p of l.points){
     if(p.anchor){
       const c = state.comps.find(c => c.id === p.anchor.comp);
-      if(c){ const w = portWorld(c, p.anchor.port); p.x = w.x; p.y = w.y; }
+      if(c && SYMBOLS[c.type].ports[p.anchor.port]){
+        const w = portWorld(c, p.anchor.port); p.x = w.x; p.y = w.y;
+      }
       else delete p.anchor;
     }
   }
@@ -493,13 +657,12 @@ function compMarkup(c, ghost){
   const s = SYMBOLS[c.type];
   const tr = 'translate('+c.x+' '+c.y+')' + (c.rot ? ' rotate('+c.rot+' '+(s.w/2)+' '+(s.h/2)+')' : '');
   let inner = s.svg;
-  // felirat – forgatásnál is talpon marad
   const lr = c.rot ? ' transform="rotate('+(-c.rot)+' '+(s.w/2)+' '+(s.h+16)+')"' : '';
   inner += '<text x="'+(s.w/2)+'" y="'+(s.h+16)+'" font-size="11" '+TXT+lr+'>'+esc(c.label)+'</text>';
   if(!ghost && sel && sel.kind==='comp' && sel.id===c.id)
     inner += '<rect x="-6" y="-6" width="'+(s.w+12)+'" height="'+(s.h+12)+'" fill="none" stroke="#1d8be0" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
   if(!ghost && (mode==='line' || (sel && sel.kind==='comp' && sel.id===c.id)))
-    inner += s.ports.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#fff" stroke="#1d8be0" stroke-width="1.6"/>').join('');
+    inner += s.ports.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="#fff" stroke="#1d8be0" stroke-width="1.6"><title>'+esc(p.n+' – '+p.s)+'</title></circle>').join('');
   return '<g '+(ghost?'opacity="0.5"':'data-comp="'+c.id+'"')+' transform="'+tr+'">'+inner+'</g>';
 }
 function lineAttrs(l){
@@ -590,6 +753,12 @@ function finishLine(){
   }
   draw = null; afterChange(); setHint();
 }
+function lineLengthM(l){
+  let px = 0;
+  for(let i=1;i<l.points.length;i++)
+    px += Math.hypot(l.points[i].x-l.points[i-1].x, l.points[i].y-l.points[i-1].y);
+  return px * (state.scale||1) / 100;
+}
 
 /* ================= Módok ================= */
 function setMode(m){
@@ -610,7 +779,7 @@ function setMode(m){
 function setHint(t){
   const def = {
     select:'Húzd az elemeket; üres területet húzva mozgatod a nézetet. Dupla katt: átnevezés.',
-    line:'Kattintgatva rajzolj; a kis körökre rátapad a vezeték. Befejezés: dupla katt vagy Enter, mégse: Esc.',
+    line:'Kattintgatva rajzolj; a csonkokra (kis körök) rátapad a vezeték. Befejezés: dupla katt vagy Enter, mégse: Esc.',
     text:'Kattints a rajzlapra a szöveg helyének kijelöléséhez.',
     place:'Kattints a rajzlapra az elem lerakásához. Shift = több példány, Esc = mégse.'
   };
@@ -618,10 +787,10 @@ function setHint(t){
 }
 
 /* ================= Eseménykezelés ================= */
-let dragCtx = null; // {kind:'pan'|'comp'|'text', ...}
+let dragCtx = null;
 
 svg.addEventListener('pointerdown', e => {
-  if(e.button === 1){ // középső gomb: pan bárhol
+  if(e.button === 1){
     dragCtx = {kind:'pan', sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y};
     svg.setPointerCapture(e.pointerId); e.preventDefault(); return;
   }
@@ -640,7 +809,8 @@ svg.addEventListener('pointerdown', e => {
   if(mode === 'line'){
     const np = lineNextPoint(w.x, w.y);
     if(!draw){
-      draw = { color:curColor, width:+$('lineWidth').value, dash:$('lineDash').value, points:[] };
+      draw = { color:curColor, width:+$('lineWidth').value, dash:$('lineDash').value,
+               pipe:$('pipeSel').value, points:[] };
       draw.points.push(np.pts[np.pts.length-1]);
     } else draw.points.push(...np.pts);
     renderOverlay(); return;
@@ -653,7 +823,6 @@ svg.addEventListener('pointerdown', e => {
     setMode('select'); return;
   }
 
-  // select mód
   const gc = e.target.closest('[data-comp]');
   const gl = e.target.closest('[data-line]');
   const gt = e.target.closest('[data-text]');
@@ -670,9 +839,17 @@ svg.addEventListener('pointerdown', e => {
     svg.setPointerCapture(e.pointerId); render(); return;
   }
   if(gl){
-    sel = {kind:'line', id:gl.dataset.line}; render(); return;
+    sel = {kind:'line', id:gl.dataset.line};
+    const l = state.lines.find(l => l.id === sel.id);
+    if(l){
+      $('pipeSel').value = l.pipe || 'otreteg20';
+      $('lineWidth').value = l.width;
+      $('lineDash').value = l.dash || '';
+      setHint('Vezeték: '+(PIPES[l.pipe]?PIPES[l.pipe].name:'?')+' – kb. '+lineLengthM(l).toFixed(1).replace('.',',')+' m');
+    }
+    render(); return;
   }
-  sel = null; render();
+  sel = null; render(); setHint();
   dragCtx = {kind:'pan', sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y};
   svg.setPointerCapture(e.pointerId);
 });
@@ -699,7 +876,13 @@ svg.addEventListener('pointermove', e => {
       render(); return;
     }
   }
-  if(mode==='place' || mode==='line') renderOverlay();
+  if(mode==='place' || mode==='line'){
+    renderOverlay();
+    if(mode==='line'){
+      const t = nearestPort(w.x, w.y);
+      if(t) setHint('Csonk: '+t.label+' – '+t.def.n+' ('+t.def.s+')');
+    }
+  }
 });
 
 svg.addEventListener('pointerup', e => {
@@ -709,7 +892,6 @@ svg.addEventListener('pointerup', e => {
 svg.addEventListener('dblclick', e => {
   e.preventDefault();
   if(mode === 'line' && draw){
-    // a dupla katt 2 fölös pontot tehet be – az utolsó duplikátumok eltávolítása
     while(draw.points.length > 1){
       const a = draw.points[draw.points.length-1], b = draw.points[draw.points.length-2];
       if(Math.abs(a.x-b.x) < 1 && Math.abs(a.y-b.y) < 1) draw.points.pop(); else break;
@@ -777,6 +959,8 @@ document.addEventListener('keydown', e => {
     return;
   }
   if(k === 'escape'){
+    if($('bom').classList.contains('open')){ $('bom').classList.remove('open'); return; }
+    if($('help').classList.contains('open')){ $('help').classList.remove('open'); return; }
     if(draw){ draw = null; renderOverlay(); }
     else if(mode !== 'select') setMode('select');
     else { sel = null; render(); }
@@ -788,6 +972,95 @@ document.addEventListener('keydown', e => {
   if(k === 'l') setMode('line');
   if(k === 't') setMode('text');
 });
+
+/* ================= Anyaglista ================= */
+function computeBOM(){
+  const rows = new Map(); // kulcs: név
+  const add = (name, qty, unit, price, uncat) => {
+    const r = rows.get(name) || {name, qty:0, unit, price, uncat:!!uncat};
+    r.qty += qty; rows.set(name, r);
+  };
+  // Berendezések, szerelvények
+  for(const c of state.comps){
+    const s = SYMBOLS[c.type]; if(!s) continue;
+    if(s.prod){ const p = PRODUCTS[s.prod]; add(p.name, 1, p.unit, p.price); }
+    else add(s.name+' (nincs az árlistában)', 1, 'darab', 0, true);
+  }
+  // Csővezetékek
+  const byPipe = {};
+  for(const l of state.lines){
+    const k = PIPES[l.pipe] ? l.pipe : 'otreteg20';
+    byPipe[k] = (byPipe[k]||0) + lineLengthM(l);
+  }
+  const pipeRows = [];
+  for(const k in byPipe){
+    const m = Math.ceil(byPipe[k]*10)/10;
+    pipeRows.push({name:PIPES[k].name, qty:m, unit:'méter', price:PIPES[k].price, uncat:false});
+  }
+  // Elzáró csapok minden bekötött csonkhoz
+  const valveRows = new Map();
+  const vadd = (key) => {
+    const p = PRODUCTS[key];
+    const r = valveRows.get(p.name) || {name:p.name, qty:0, unit:p.unit, price:p.price, uncat:false};
+    r.qty++; valveRows.set(p.name, r);
+  };
+  let missingValve = 0;
+  for(const c of state.comps){
+    const s = SYMBOLS[c.type];
+    if(!s || !s.valves) continue;
+    const connected = new Set();
+    for(const l of state.lines) for(const p of l.points)
+      if(p.anchor && p.anchor.comp === c.id) connected.add(p.anchor.port);
+    for(const idx of connected){
+      const port = s.ports[idx];
+      if(!port || port.nv || port.f === 'fust') continue;
+      if(s.valveProd){ vadd(s.valveProd); continue; }
+      const key = port.f === 'gaz' ? GAZCSAP[port.s] : GOLYOSCSAP[port.s];
+      if(key) vadd(key); else missingValve++;
+    }
+  }
+  return {
+    equip: [...rows.values()],
+    pipes: pipeRows,
+    valves: [...valveRows.values()],
+    missingValve
+  };
+}
+const ft = n => n.toLocaleString('hu-HU')+' Ft';
+const qtyStr = r => (r.unit==='méter' ? r.qty.toFixed(1).replace('.',',') : r.qty);
+
+function renderBOM(){
+  const b = computeBOM();
+  const all = [
+    {title:'Berendezések, szerelvények', rows:b.equip.filter(r=>!r.uncat)},
+    {title:'Csővezetékek', rows:b.pipes},
+    {title:'Elzáró csapok a bekötött csonkokhoz (automatikus)', rows:b.valves},
+    {title:'Árlistán kívüli tételek', rows:b.equip.filter(r=>r.uncat)}
+  ];
+  let total = 0, any = false, h = '<table><thead><tr><th>Tétel</th><th class="num">Menny.</th><th>Egység</th><th class="num">Nettó egységár</th><th class="num">Összesen</th></tr></thead><tbody>';
+  for(const sec of all){
+    if(!sec.rows.length) continue;
+    any = true;
+    h += '<tr class="sect"><td colspan="5">'+sec.title+'</td></tr>';
+    for(const r of sec.rows.sort((a,b)=>a.name.localeCompare(b.name,'hu'))){
+      const sum = Math.round(r.qty*r.price); total += sum;
+      h += '<tr><td>'+esc(r.name)+'</td><td class="num">'+qtyStr(r)+'</td><td>'+r.unit+'</td>'+
+           '<td class="num">'+(r.price?ft(r.price):'–')+'</td><td class="num">'+(sum?ft(sum):'–')+'</td></tr>';
+    }
+  }
+  h += '<tr class="total"><td colspan="4">Nettó összesen</td><td class="num">'+ft(total)+'</td></tr></tbody></table>';
+  if(b.missingValve) h += '<p class="warn">'+b.missingValve+' csonkhoz nem található megfelelő méretű csap az árlistában.</p>';
+  h += '<p style="font-size:12px">A 0 Ft-os tételeknek nincs rögzített ára az árlistában – az ajánlat előtt pótolni érdemes.</p>';
+  $('bomBody').innerHTML = any ? h : '<div class="empty">A rajz még üres – helyezz el elemeket és kösd össze őket, az anyaglista ebből készül.</div>';
+}
+function bomCsv(){
+  const b = computeBOM();
+  const rows = [['Tétel','Mennyiség','Egység','Nettó egységár (Ft)','Nettó összesen (Ft)']];
+  const push = r => rows.push([r.name, String(qtyStr(r)), r.unit, String(r.price), String(Math.round(r.qty*r.price))]);
+  b.equip.filter(r=>!r.uncat).forEach(push); b.pipes.forEach(push); b.valves.forEach(push);
+  b.equip.filter(r=>r.uncat).forEach(push);
+  return rows.map(r => r.map(c => '"'+c.replace(/"/g,'""')+'"').join(';')).join('\r\n');
+}
 
 /* ================= Export ================= */
 function contentBBox(){
@@ -805,10 +1078,11 @@ function contentBBox(){
 function exportSVGString(){
   const b = contentBBox();
   const keep = sel; sel = null;
+  const keepMode = mode; mode = 'select';
   const body = state.lines.map(lineMarkup).join('') +
                state.comps.map(c=>compMarkup(c,false)).join('') +
                state.texts.map(textMarkup).join('');
-  sel = keep;
+  sel = keep; mode = keepMode;
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+b.x+' '+b.y+' '+b.w+' '+b.h+'" width="'+b.w+'" height="'+b.h+'">'+
     '<rect x="'+b.x+'" y="'+b.y+'" width="'+b.w+'" height="'+b.h+'" fill="#ffffff"/>'+body+'</svg>';
 }
@@ -829,7 +1103,7 @@ $('fileInput').onchange = e => {
     try{
       const st = JSON.parse(txt);
       if(!Array.isArray(st.comps) || !Array.isArray(st.lines)) throw 0;
-      pushHistory(); state = st; sel = null; afterChange();
+      pushHistory(); state = migrateState(st); sel = null; afterChange();
     }catch(err){ alert('Nem sikerült beolvasni: nem érvényes tervrajz fájl.'); }
     e.target.value = '';
   });
@@ -854,7 +1128,7 @@ $('printBtn').onclick = () => { zoomFit(); setTimeout(()=>window.print(), 100); 
 $('newBtn').onclick = () => {
   if(!confirm('Biztosan új, üres rajzot kezdesz? A mostani a böngészőből törlődik (a mentett fájlok megmaradnak).')) return;
   pushHistory();
-  state = { title:'Névtelen tervrajz', nextId:1, comps:[], lines:[], texts:[] };
+  state = { title:'Névtelen tervrajz', nextId:1, scale:1, comps:[], lines:[], texts:[] };
   sel = null; afterChange();
 };
 
@@ -872,8 +1146,10 @@ $('newBtn').onclick = () => {
     '<h3>'+c.name+'</h3><div class="pal">' +
     c.items.map(k => {
       const s = SYMBOLS[k];
+      const prod = s.prod ? PRODUCTS[s.prod] : null;
+      const tip = prod ? prod.name+(prod.price?' – '+ft(prod.price):'') : s.name+' (nincs az árlistában)';
       const pad = 6, vb = (-pad)+' '+(-pad)+' '+(s.w+2*pad)+' '+(s.h+2*pad);
-      return '<button class="pitem" data-type="'+k+'" title="'+s.name+'">'+
+      return '<button class="pitem" data-type="'+k+'" title="'+esc(tip)+'">'+
         '<span class="thumb"><svg viewBox="'+vb+'" preserveAspectRatio="xMidYMid meet">'+s.svg+'</svg></span>'+
         '<b>'+s.name+'</b></button>';
     }).join('') + '</div>'
@@ -902,6 +1178,23 @@ $('newBtn').onclick = () => {
     if(mode !== 'line' && !(sel && sel.kind === 'line')) setMode('line');
   });
 })();
+
+(function buildPipes(){
+  const groups = {};
+  for(const k in PIPES){
+    (groups[PIPES[k].grp] = groups[PIPES[k].grp] || []).push(k);
+  }
+  $('pipeSel').innerHTML = Object.keys(groups).map(g =>
+    '<optgroup label="'+g+'">'+groups[g].map(k =>
+      '<option value="'+k+'"'+(k==='otreteg20'?' selected':'')+'>'+PIPES[k].name+
+      (PIPES[k].price?' ('+ft(PIPES[k].price)+'/m)':'')+'</option>').join('')+'</optgroup>'
+  ).join('');
+})();
+$('pipeSel').onchange = e => {
+  if(sel && sel.kind === 'line'){ pushHistory();
+    state.lines.find(l => l.id === sel.id).pipe = e.target.value; afterChange(); }
+  if(draw) draw.pipe = e.target.value;
+};
 $('lineWidth').onchange = e => {
   if(sel && sel.kind === 'line'){ pushHistory();
     state.lines.find(l => l.id === sel.id).width = +e.target.value; afterChange(); }
@@ -932,15 +1225,47 @@ function zoomFit(){
 $('zFit').onclick = zoomFit;
 $('docTitle').addEventListener('change', e => { state.title = e.target.value; afterChange(); });
 $('helpBtn').onclick = () => $('help').classList.add('open');
-$('helpClose').onclick = () => $('help').classList.remove('open');
-$('help').addEventListener('click', e => { if(e.target === $('help')) $('help').classList.remove('open'); });
+$('bomBtn').onclick = () => { $('scaleInp').value = state.scale||1; renderBOM(); $('bom').classList.add('open'); };
+$('scaleInp').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if(v > 0){ state.scale = v; renderBOM();
+    try{ localStorage.setItem('gepeszterv-v1', JSON.stringify(state)); }catch(err){} }
+});
+$('bomCsv').onclick = () => download(fileBase()+'_anyaglista.csv',
+  new Blob(['﻿'+bomCsv()], {type:'text/csv;charset=utf-8'}));
+$('bomCopy').onclick = () => {
+  navigator.clipboard.writeText(bomCsv().replace(/;/g,'\t').replace(/"/g,'')).then(
+    () => setHint('Anyaglista a vágólapra másolva – beillesztheted táblázatba.'),
+    () => alert('A vágólapra másolás nem sikerült.'));
+};
+document.querySelectorAll('[data-close]').forEach(b =>
+  b.addEventListener('click', () => $(b.dataset.close).classList.remove('open')));
+document.querySelectorAll('.modal').forEach(m =>
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); }));
 window.addEventListener('resize', applyView);
 
 /* ================= Indulás ================= */
+function migrateState(st){
+  st.scale = st.scale > 0 ? st.scale : 1;
+  st.comps = (st.comps||[]).map(c => {
+    if(SYMBOLS[c.type]) return c;
+    const t = MIGRATE[c.type];
+    return t && SYMBOLS[t] ? Object.assign({}, c, {type:t, label:SYMBOLS[t].name}) : null;
+  }).filter(Boolean);
+  for(const l of (st.lines||[])){
+    if(!PIPES[l.pipe]) l.pipe = 'otreteg20';
+    for(const p of l.points) if(p.anchor){
+      const c = st.comps.find(c => c.id === p.anchor.comp);
+      if(!c || !SYMBOLS[c.type].ports[p.anchor.port]) delete p.anchor;
+    }
+  }
+  st.texts = st.texts||[];
+  return st;
+}
 try{
   const saved = localStorage.getItem('gepeszterv-v1');
   if(saved){ const st = JSON.parse(saved);
-    if(st && Array.isArray(st.comps)) state = st; }
+    if(st && Array.isArray(st.comps)) state = migrateState(st); }
 }catch(e){}
 $('docTitle').value = state.title;
 applyView(); setMode('select'); render();
