@@ -101,6 +101,18 @@
     position:absolute; right:12px; bottom:12px; display:flex; gap:4px; padding:4px;
     background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow);
   }
+  #drawBar{
+    position:absolute; left:50%; bottom:16px; transform:translateX(-50%);
+    display:none; gap:8px; padding:6px; background:var(--panel);
+    border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:5;
+  }
+  #drawBar.show{display:flex}
+  #drawBar button{
+    padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; white-space:nowrap;
+  }
+  #drawFinish{background:var(--accent); color:#fff}
+  #drawFinish:disabled{opacity:.45; cursor:default}
+  #drawCancel{background:var(--panel2); color:var(--muted); border:1px solid var(--line)}
   .zoombox button{padding:3px 9px; border-radius:5px; font-size:13px}
   .zoombox button:hover{background:var(--accent-soft)}
 
@@ -152,6 +164,13 @@
   #bom .actions .tbtn{border:1px solid var(--line); background:var(--panel2)}
   #bom .actions .tbtn:hover{background:var(--accent-soft)}
   #bom .empty{color:var(--muted); font-size:13.5px; padding:20px 0}
+
+  @media (max-width:700px){
+    aside{width:122px}
+    .pal{grid-template-columns:1fr}
+    #docTitle{width:120px}
+    .tbtn{padding:5px 7px}
+  }
 
   @media print{
     header, aside, footer, .zoombox, .modal{display:none !important}
@@ -247,6 +266,10 @@
       <button id="zFit" title="Rajz méretre igazítása">⛶</button>
       <button id="zIn" title="Nagyítás">+</button>
     </div>
+    <div id="drawBar">
+      <button id="drawFinish">✓ Vezeték kész</button>
+      <button id="drawCancel">✕ Mégse</button>
+    </div>
   </div>
 </div>
 
@@ -268,7 +291,8 @@
        és a <b>csőtípust</b> – ebből számolja az anyaglista a méterárakat.
        Kattintgatással törésponttól töréspontig rajzolsz; az elemek csonkjaira (kis körök)
        a vezeték rátapad, és az elem mozgatásakor vele megy. A csonk fölé érve a lábléc mutatja
-       a gyári csonk nevét és méretét. Befejezés: <b>dupla kattintás</b> vagy <kbd>Enter</kbd>.</p>
+       a gyári csonk nevét és méretét. Befejezés: a rajzlap alján megjelenő
+       <b>„✓ Vezeték kész”</b> gomb (mobilon is), vagy <b>dupla kattintás</b> / <kbd>Enter</kbd>.</p>
     <p><b>Anyaglista:</b> az <b>≡ Anyaglista</b> gomb összegyűjti a lerakott berendezéseket,
        a vezetékek hosszát csőtípusonként (a lépték állítható), és <b>minden bekötött csonkhoz
        automatikusan elzáró csapot</b> számol (gázcsonkhoz gázcsapot). CSV-be is letölthető.</p>
@@ -709,6 +733,11 @@ function renderOverlay(){
     if(t) m += '<circle cx="'+t.x+'" cy="'+t.y+'" r="7" fill="none" stroke="#1d8be0" stroke-width="2"/>';
   }
   gOverlay.innerHTML = m;
+  updateDrawBar();
+}
+function updateDrawBar(){
+  $('drawBar').classList.toggle('show', mode === 'line');
+  $('drawFinish').disabled = !(draw && draw.points.length >= 2);
 }
 
 /* ================= Előzmények / mentés ================= */
@@ -1207,6 +1236,11 @@ $('lineDash').onchange = e => {
 $('mSelect').onclick = () => setMode('select');
 $('mLine').onclick = () => setMode('line');
 $('mText').onclick = () => setMode('text');
+$('drawFinish').onclick = () => { if(draw && draw.points.length >= 2) finishLine(); };
+$('drawCancel').onclick = () => {
+  if(draw){ draw = null; renderOverlay(); setHint(); }
+  else setMode('select');
+};
 $('orthoBtn').onclick = () => { ortho = !ortho; $('orthoBtn').classList.toggle('on', ortho); };
 $('rotBtn').onclick = rotateSel;
 $('dupBtn').onclick = dupSel;
