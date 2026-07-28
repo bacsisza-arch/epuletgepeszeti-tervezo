@@ -106,13 +106,14 @@
     display:none; gap:8px; padding:6px; background:var(--panel);
     border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:5;
   }
-  #drawBar.show{display:flex}
+  #drawBar.show{display:flex; flex-wrap:wrap; justify-content:center; max-width:calc(100% - 24px)}
   #drawBar button{
-    padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; white-space:nowrap;
+    padding:10px 14px; border-radius:8px; font-size:14px; font-weight:600; white-space:nowrap;
+    background:var(--panel2); color:var(--ink); border:1px solid var(--line);
   }
-  #drawFinish{background:var(--accent); color:#fff}
-  #drawFinish:disabled{opacity:.45; cursor:default}
-  #drawCancel{background:var(--panel2); color:var(--muted); border:1px solid var(--line)}
+  #drawBar button.primary{background:var(--accent); color:#fff; border-color:var(--accent)}
+  #drawBar button:disabled{opacity:.45; cursor:default}
+  #drawBar button.danger{color:var(--danger)}
   .zoombox button{padding:3px 9px; border-radius:5px; font-size:13px}
   .zoombox button:hover{background:var(--accent-soft)}
 
@@ -267,10 +268,7 @@
       <button id="zFit" title="Rajz méretre igazítása">⛶</button>
       <button id="zIn" title="Nagyítás">+</button>
     </div>
-    <div id="drawBar">
-      <button id="drawFinish">✓ Vezeték kész</button>
-      <button id="drawCancel">✕ Mégse</button>
-    </div>
+    <div id="drawBar"></div>
   </div>
 </div>
 
@@ -642,7 +640,7 @@ const COLORS = [
 let state = { title:'Névtelen tervrajz', nextId:1, scale:1, comps:[], lines:[], texts:[] };
 let view = { x:-40, y:-40, scale:1 };
 let mode = 'select';
-let placingType = null;
+let placingType = null, placingRot = 0;
 let sel = null;
 let draw = null;
 let curColor = COLORS[0].c, ortho = true, routeAuto = true;
@@ -828,7 +826,7 @@ function renderOverlay(){
   let m = '';
   if(mode==='place' && placingType){
     const s = SYMBOLS[placingType];
-    m += compMarkup({type:placingType, x:snap(mouse.x-s.w/2), y:snap(mouse.y-s.h/2), rot:0, label:s.name}, true);
+    m += compMarkup({type:placingType, x:snap(mouse.x-s.w/2), y:snap(mouse.y-s.h/2), rot:placingRot, label:s.name}, true);
   }
   if(draw && draw.points.length){
     let pts;
@@ -854,9 +852,54 @@ function renderOverlay(){
   updateDrawBar();
 }
 function updateDrawBar(){
-  $('drawBar').classList.toggle('show', mode === 'line');
-  $('drawFinish').disabled = !(draw && draw.points.length >= 2);
+  const bar = $('drawBar');
+  const btn = (act, label, cls, dis) =>
+    '<button data-act="'+act+'"'+(cls?' class="'+cls+'"':'')+(dis?' disabled':'')+'>'+label+'</button>';
+  let h = '';
+  if(mode === 'line'){
+    h = routeAuto
+      ? btn('cancelDraw','✕ Mégse')
+      : btn('finish','✓ Vezeték kész','primary', !(draw && draw.points.length >= 2)) +
+        btn('cancelDraw','✕ Mégse');
+  } else if(mode === 'place'){
+    h = btn('rotPlace','⟳ Forgatás','primary') + btn('cancelPlace','✕ Mégse');
+  } else if(sel && sel.kind === 'comp'){
+    h = btn('rot','⟳ Forgatás','primary') + btn('dup','⧉ Másolás') +
+        btn('rename','✎ Átnevezés') + btn('del','✕ Törlés','danger');
+  } else if(sel){
+    h = (sel.kind === 'text' ? btn('rename','✎ Szerkesztés') : '') +
+        btn('del','✕ Törlés','danger');
+  }
+  bar.innerHTML = h;
+  bar.classList.toggle('show', !!h);
 }
+function renameSel(){
+  if(!sel) return;
+  if(sel.kind === 'comp'){
+    const c = state.comps.find(c => c.id === sel.id);
+    const v = prompt('Felirat:', c.label);
+    if(v !== null){ pushHistory(); c.label = v; afterChange(); }
+  } else if(sel.kind === 'text'){
+    const t = state.texts.find(t => t.id === sel.id);
+    const v = prompt('Szöveg:', t.text);
+    if(v !== null){ pushHistory(); t.text = v; afterChange(); }
+  }
+}
+$('drawBar').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  switch(b.dataset.act){
+    case 'finish': if(draw && draw.points.length >= 2) finishLine(); break;
+    case 'cancelDraw':
+      if(draw){ draw = null; renderOverlay(); setHint(); } else setMode('select');
+      break;
+    case 'rotPlace': placingRot = (placingRot + 90) % 360; renderOverlay(); break;
+    case 'cancelPlace': setMode('select'); break;
+    case 'rot': rotateSel(); break;
+    case 'dup': dupSel(); break;
+    case 'rename': renameSel(); break;
+    case 'del': deleteSel(); break;
+  }
+});
 
 /* ================= Előzmények / mentés ================= */
 function pushHistory(){
@@ -950,7 +993,7 @@ svg.addEventListener('pointerdown', e => {
     const s = SYMBOLS[placingType];
     pushHistory();
     state.comps.push({ id:'c'+(state.nextId++), type:placingType,
-      x:snap(w.x-s.w/2), y:snap(w.y-s.h/2), rot:0, label:s.name });
+      x:snap(w.x-s.w/2), y:snap(w.y-s.h/2), rot:placingRot, label:s.name });
     afterChange();
     if(!e.shiftKey){ placingType = null; setMode('select'); sel = {kind:'comp', id:state.comps[state.comps.length-1].id}; render(); }
     return;
@@ -1136,7 +1179,7 @@ document.addEventListener('keydown', e => {
   }
   if(k === 'enter' && draw){ finishLine(); }
   if(k === 'delete' || k === 'backspace'){ e.preventDefault(); deleteSel(); }
-  if(k === 'r') rotateSel();
+  if(k === 'r'){ if(mode === 'place'){ placingRot = (placingRot+90)%360; renderOverlay(); } else rotateSel(); }
   if(k === 'v') setMode('select');
   if(k === 'l') setMode('line');
   if(k === 't') setMode('text');
@@ -1364,7 +1407,7 @@ $('newBtn').onclick = () => {
   ).join('');
   pal.addEventListener('click', e => {
     const b = e.target.closest('.pitem'); if(!b) return;
-    placingType = b.dataset.type; setMode('place');
+    placingType = b.dataset.type; placingRot = 0; setMode('place');
   });
 })();
 
@@ -1415,17 +1458,12 @@ $('lineDash').onchange = e => {
 $('mSelect').onclick = () => setMode('select');
 $('mLine').onclick = () => setMode('line');
 $('mText').onclick = () => setMode('text');
-$('drawFinish').onclick = () => { if(draw && draw.points.length >= 2) finishLine(); };
-$('drawCancel').onclick = () => {
-  if(draw){ draw = null; renderOverlay(); setHint(); }
-  else setMode('select');
-};
 $('orthoBtn').onclick = () => { ortho = !ortho; $('orthoBtn').classList.toggle('on', ortho); };
 $('routeBtn').onclick = () => {
   routeAuto = !routeAuto;
   $('routeBtn').classList.toggle('on', routeAuto);
-  if(draw){ draw = null; renderOverlay(); }
-  setHint();
+  if(draw) draw = null;
+  renderOverlay(); setHint();
 };
 $('rotBtn').onclick = rotateSel;
 $('dupBtn').onclick = dupSel;
