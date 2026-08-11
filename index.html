@@ -166,7 +166,67 @@
   #bom .actions .tbtn:hover{background:var(--accent-soft)}
   #bom .empty{color:var(--muted); font-size:13.5px; padding:20px 0}
 
+  /* ---------- saját párbeszédablak, értesítés ---------- */
+  #toast{
+    position:fixed; left:50%; bottom:70px; transform:translateX(-50%);
+    background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:8px;
+    font-size:13px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:90;
+    max-width:90vw; text-align:center;
+  }
+  #toast.show{opacity:.95}
+  #dlg .card{max-width:440px; width:100%}
+  #dlg input[type=text]{
+    width:100%; font:inherit; padding:8px 10px; border:1px solid var(--line);
+    border-radius:8px; background:var(--panel2); color:var(--ink); margin:10px 0 0;
+  }
+  #dlg .row{display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap}
+  #dlg .row .tbtn{border:1px solid var(--line); background:var(--panel2)}
+  #dlg .row .tbtn.primary{background:var(--accent); color:#fff; border-color:var(--accent)}
+  #dlg .saves{display:flex; flex-direction:column; gap:6px; max-height:40vh; overflow:auto; margin-top:10px}
+  #dlg .sv{display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line);
+    border-radius:8px; background:var(--panel2)}
+  #dlg .sv b{flex:1; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  #dlg .sv span{font-size:11px; color:var(--muted); white-space:nowrap}
+  #dlg .sv button{font-size:12.5px; padding:4px 10px; border-radius:6px; background:var(--accent-soft)}
+  #dlg .sv button.d{color:var(--danger); background:none}
+  #dlg .empty{color:var(--muted); font-size:13px; padding:14px 0}
+
+  /* ---------- demó mód ---------- */
+  #simPanel{
+    position:absolute; top:10px; right:10px; width:280px; max-height:calc(100% - 20px);
+    overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    box-shadow:var(--shadow); padding:14px; display:none; z-index:6;
+  }
+  body.simming #simPanel{display:block}
+  body.simming aside{pointer-events:none; opacity:.45}
+  body.simming header .tgroup{pointer-events:none; opacity:.45}
+  #simPanel h4{margin:0 0 10px; font-size:14px}
+  #simPanel .grp{border-top:1px solid var(--line); padding:10px 0 6px; margin-top:6px}
+  #simPanel .grp:first-of-type{border-top:none; margin-top:0}
+  #simPanel .gt{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+    font-weight:600; margin-bottom:6px}
+  #simPanel label{font-size:12.5px; color:var(--muted); display:flex; justify-content:space-between; margin:6px 0 1px}
+  #simPanel label .val{font-variant-numeric:tabular-nums; color:var(--ink); font-weight:600}
+  #simPanel input[type=range]{width:100%; accent-color:var(--accent)}
+  #simPanel .iss{font-size:12.5px; padding:6px 9px; border-radius:6px; margin:4px 0; line-height:1.45}
+  #simPanel .iss.err{background:rgba(192,57,43,.14); color:var(--danger)}
+  #simPanel .iss.warn{background:rgba(224,168,0,.16); color:#9c7400}
+  #simPanel .iss.ok{background:rgba(30,158,74,.14); color:#178a40}
+  #simPanel .modebtns{display:flex; gap:6px}
+  #simPanel .modebtns button{flex:1; padding:8px; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel2); font-size:13px; font-weight:600}
+  #simPanel .modebtns button.on{background:var(--accent); color:#fff; border-color:var(--accent)}
+  #simPanel .stop{width:100%; margin-top:10px; padding:9px; border-radius:8px; font-weight:700;
+    background:var(--danger); color:#fff}
+  @keyframes flowdash{ to{ stroke-dashoffset:-64 } }
+  .flowF{ animation:flowdash 1.1s linear infinite }
+  .flowR{ animation:flowdash 1.1s linear infinite reverse }
+  @keyframes haloP{ 0%,100%{opacity:.2} 50%{opacity:.55} }
+  .halo{ animation:haloP 1.6s ease-in-out infinite }
+  @media (prefers-reduced-motion: reduce){ .flowF,.flowR,.halo{animation:none; opacity:.5} }
+
   @media (max-width:700px){
+    #simPanel{width:230px}
     aside{width:122px}
     .pal{grid-template-columns:1fr}
     #docTitle{width:120px}
@@ -225,6 +285,7 @@
   </div>
 
   <button class="tbtn primary" id="bomBtn" title="Anyaglista összeállítása a rajzból">≡ Anyaglista</button>
+  <button class="tbtn primary" id="simBtn" title="A rendszer működésének szimulálása">▶ Demó</button>
 
   <span class="spacer"></span>
 
@@ -260,6 +321,7 @@
         <g id="gLines"></g>
         <g id="gComps"></g>
         <g id="gAuto"></g>
+        <g id="gFlow"></g>
         <g id="gTexts"></g>
         <g id="gOverlay"></g>
       </g>
@@ -270,6 +332,7 @@
       <button id="zIn" title="Nagyítás">+</button>
     </div>
     <div id="drawBar"></div>
+    <div id="simPanel"></div>
   </div>
 </div>
 
@@ -305,10 +368,24 @@
        <kbd>R</kbd> forgat, <kbd>Del</kbd> töröl, <kbd>Ctrl+D</kbd> duplikál,
        dupla kattintással átnevezheted a feliratot. Kijelölt vezeték színe/csöve/vastagsága
        a fenti vezérlőkkel módosítható.</p>
+    <p><b>▶ Demó:</b> az összekötött rendszer működése kipróbálható! A demó ellenőrzi a rendszert
+       (zárt kör, szivattyú, biztonsági szelep, tágulási tartály…), majd animálva mutatja, merre
+       áramlik a víz. A jobb oldali panelen állíthatod a termosztátok és a HMV tároló hőfokát,
+       a külső hőmérsékletet, és válthatsz fűtés/hűtés üzemmód között – a körök igény szerint
+       indulnak és állnak le.</p>
     <p><b>Nézet, mentés:</b> görgővel nagyítasz, üres területet húzva mozgatod a rajzlapot.
-       A rajz automatikusan mentődik a böngészőbe; JSON fájlba is kiírható, SVG/PNG-be exportálható.</p>
+       A vászon automatikusan mentődik; a <b>Mentés</b> gombbal névvel ellátva a böngészőbe
+       vagy JSON fájlba mentheted, a <b>Megnyitás</b> listázza a mentett rajzokat. SVG/PNG export is van.</p>
   </div>
 </div>
+
+<div id="dlg" class="modal" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2 id="dlgTitle"></h2>
+    <div id="dlgBody"></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
 
 <div id="bom" class="modal" role="dialog" aria-modal="true" aria-label="Anyaglista">
   <div class="card">
@@ -754,7 +831,42 @@ let mouse = {x:0, y:0};
 
 const $ = id => document.getElementById(id);
 const svg = $('canvas'), world = $('world');
-const gLines = $('gLines'), gComps = $('gComps'), gAuto = $('gAuto'), gTexts = $('gTexts'), gOverlay = $('gOverlay');
+const gLines = $('gLines'), gComps = $('gComps'), gAuto = $('gAuto'), gFlow = $('gFlow'),
+      gTexts = $('gTexts'), gOverlay = $('gOverlay');
+let SIM = { on:false };
+
+/* ---- saját párbeszédablakok (beágyazott oldalon a böngésző prompt/confirm tiltva lehet) ---- */
+function openDlg(title, bodyHTML){
+  $('dlgTitle').textContent = title;
+  $('dlgBody').innerHTML = bodyHTML;
+  $('dlg').classList.add('open');
+}
+function closeDlg(){ $('dlg').classList.remove('open'); }
+function uiToast(msg){
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function uiConfirm(msg, cb){
+  openDlg('Megerősítés',
+    '<p style="font-size:13.5px;line-height:1.5;color:var(--muted)">'+esc(msg)+'</p>' +
+    '<div class="row"><button class="tbtn" id="dlgNo">Mégse</button>' +
+    '<button class="tbtn primary" id="dlgYes">Igen</button></div>');
+  $('dlgYes').onclick = () => { closeDlg(); cb(); };
+  $('dlgNo').onclick = closeDlg;
+}
+function uiPrompt(title, def, cb){
+  openDlg(title,
+    '<input type="text" id="dlgInp">' +
+    '<div class="row"><button class="tbtn" id="dlgNo">Mégse</button>' +
+    '<button class="tbtn primary" id="dlgYes">OK</button></div>');
+  const i = $('dlgInp'); i.value = def || '';
+  setTimeout(() => { i.focus(); i.select(); }, 30);
+  const go = () => { const v = i.value; closeDlg(); cb(v); };
+  $('dlgYes').onclick = go;
+  $('dlgNo').onclick = closeDlg;
+  i.addEventListener('keydown', e => { e.stopPropagation(); if(e.key === 'Enter') go(); });
+}
 const GRID = 10;
 const snap = v => Math.round(v/GRID)*GRID;
 
@@ -1092,12 +1204,10 @@ function renameSel(){
   if(!sel) return;
   if(sel.kind === 'comp'){
     const c = state.comps.find(c => c.id === sel.id);
-    const v = prompt('Felirat:', c.label);
-    if(v !== null){ pushHistory(); c.label = v; afterChange(); }
+    uiPrompt('Felirat', c.label, v => { if(v !== ''){ pushHistory(); c.label = v; afterChange(); } });
   } else if(sel.kind === 'text'){
     const t = state.texts.find(t => t.id === sel.id);
-    const v = prompt('Szöveg:', t.text);
-    if(v !== null){ pushHistory(); t.text = v; afterChange(); }
+    uiPrompt('Szöveg', t.text, v => { if(v !== ''){ pushHistory(); t.text = v; afterChange(); } });
   }
 }
 $('drawBar').addEventListener('click', e => {
@@ -1204,6 +1314,10 @@ svg.addEventListener('pointerdown', e => {
     svg.setPointerCapture(e.pointerId); e.preventDefault(); return;
   }
   if(e.button !== 0) return;
+  if(SIM.on){
+    dragCtx = {kind:'pan', sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y};
+    svg.setPointerCapture(e.pointerId); return;
+  }
   const w = toWorld(e);
 
   if(mode === 'place' && placingType){
@@ -1247,10 +1361,12 @@ svg.addEventListener('pointerdown', e => {
     renderOverlay(); return;
   }
   if(mode === 'text'){
-    const txt = prompt('Szöveg:');
-    if(txt){ pushHistory();
-      state.texts.push({id:'t'+(state.nextId++), x:snap(w.x), y:snap(w.y), text:txt, size:14});
-      afterChange(); }
+    const tx = snap(w.x), ty = snap(w.y);
+    uiPrompt('Szöveg', '', v => {
+      if(v){ pushHistory();
+        state.texts.push({id:'t'+(state.nextId++), x:tx, y:ty, text:v, size:14});
+        afterChange(); }
+    });
     setMode('select'); return;
   }
 
@@ -1322,6 +1438,7 @@ svg.addEventListener('pointerup', e => {
 });
 svg.addEventListener('dblclick', e => {
   e.preventDefault();
+  if(SIM.on) return;
   if(mode === 'line' && draw){
     while(draw.points.length > 1){
       const a = draw.points[draw.points.length-1], b = draw.points[draw.points.length-2];
@@ -1331,15 +1448,8 @@ svg.addEventListener('dblclick', e => {
   }
   const gc = e.target.closest('[data-comp]');
   const gt = e.target.closest('[data-text]');
-  if(gc){
-    const c = state.comps.find(c => c.id === gc.dataset.comp);
-    const v = prompt('Felirat:', c.label);
-    if(v !== null){ pushHistory(); c.label = v; afterChange(); }
-  } else if(gt){
-    const t = state.texts.find(t => t.id === gt.dataset.text);
-    const v = prompt('Szöveg:', t.text);
-    if(v !== null){ pushHistory(); t.text = v; afterChange(); }
-  }
+  if(gc){ sel = {kind:'comp', id:gc.dataset.comp}; render(); renameSel(); }
+  else if(gt){ sel = {kind:'text', id:gt.dataset.text}; render(); renameSel(); }
 });
 svg.addEventListener('contextmenu', e => {
   e.preventDefault();
@@ -1383,6 +1493,8 @@ function dupSel(){
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
   const k = e.key.toLowerCase();
+  if(SIM.on){ if(k === 'escape') stopSim(); return; }
+  if(k === 'escape' && $('dlg').classList.contains('open')){ closeDlg(); return; }
   if(e.ctrlKey || e.metaKey){
     if(k === 'z'){ e.preventDefault(); undo(); return; }
     if(k === 'y'){ e.preventDefault(); redo(); return; }
@@ -1553,9 +1665,63 @@ function download(name, blob){
 }
 const fileBase = () => (state.title || 'tervrajz').replace(/[^\wáéíóöőúüűÁÉÍÓÖŐÚÜŰ -]+/g,'').trim().replace(/ +/g,'_') || 'tervrajz';
 
-$('saveBtn').onclick = () => download(fileBase()+'.json',
-  new Blob([JSON.stringify(state, null, 1)], {type:'application/json'}));
-$('openBtn').onclick = () => $('fileInput').click();
+const SAVES_KEY = 'gepeszterv-saves';
+function listSaves(){ try{ return JSON.parse(localStorage.getItem(SAVES_KEY)) || []; }catch(e){ return []; } }
+function storeSaves(a){
+  try{ localStorage.setItem(SAVES_KEY, JSON.stringify(a)); return true; }
+  catch(e){ uiToast('Nem sikerült menteni – betelt a böngésző tárhelye?'); return false; }
+}
+$('saveBtn').onclick = () => {
+  openDlg('Rajz mentése',
+    '<input type="text" id="dlgInp" placeholder="A rajz neve">' +
+    '<div class="row">' +
+    '<button class="tbtn" id="svFile">⭳ Letöltés JSON fájlként</button>' +
+    '<button class="tbtn primary" id="svLocal">Mentés a böngészőbe</button></div>');
+  const i = $('dlgInp'); i.value = state.title || 'Névtelen tervrajz';
+  i.addEventListener('keydown', e => e.stopPropagation());
+  $('svLocal').onclick = () => {
+    const name = i.value.trim() || 'Névtelen tervrajz';
+    state.title = name; $('docTitle').value = name;
+    const saves = listSaves().filter(x => x.name !== name);
+    saves.unshift({name, date:new Date().toISOString().slice(0,16).replace('T',' '), state});
+    if(storeSaves(saves.slice(0, 30))){ closeDlg(); uiToast('Elmentve a böngészőbe: '+name); afterChange(); }
+  };
+  $('svFile').onclick = () => {
+    state.title = i.value.trim() || state.title; afterChange();
+    download(fileBase()+'.json', new Blob([JSON.stringify(state, null, 1)], {type:'application/json'}));
+    closeDlg(); uiToast('Letöltés elindítva.');
+  };
+};
+$('openBtn').onclick = () => {
+  const saves = listSaves();
+  const rows = saves.length ? saves.map((sv,i) =>
+    '<div class="sv"><b>'+esc(sv.name)+'</b><span>'+esc(sv.date||'')+'</span>' +
+    '<button data-load="'+i+'">Betöltés</button><button class="d" data-del="'+i+'">✕</button></div>'
+  ).join('') : '<div class="empty">Még nincs böngészőbe mentett rajz.</div>';
+  openDlg('Rajz megnyitása',
+    '<div class="saves" id="svList">'+rows+'</div>' +
+    '<div class="row"><button class="tbtn" id="opFile">Fájl megnyitása…</button>' +
+    '<button class="tbtn" data-close-dlg="1">Bezárás</button></div>');
+  $('opFile').onclick = () => $('fileInput').click();
+  $('dlgBody').addEventListener('click', function h(e){
+    const cb = e.target.closest('[data-close-dlg]');
+    if(cb){ closeDlg(); return; }
+    const lb = e.target.closest('[data-load]');
+    if(lb){
+      const sv = listSaves()[+lb.dataset.load];
+      if(sv){ pushHistory(); state = migrateState(JSON.parse(JSON.stringify(sv.state))); sel = null;
+        afterChange(); closeDlg(); uiToast('Betöltve: '+sv.name); }
+      return;
+    }
+    const db = e.target.closest('[data-del]');
+    if(db){
+      const saves2 = listSaves(); const gone = saves2.splice(+db.dataset.del, 1);
+      storeSaves(saves2);
+      db.closest('.sv').remove();
+      uiToast('Törölve: '+(gone[0] ? gone[0].name : ''));
+    }
+  });
+};
 $('fileInput').onchange = e => {
   const f = e.target.files[0]; if(!f) return;
   f.text().then(txt => {
@@ -1563,7 +1729,8 @@ $('fileInput').onchange = e => {
       const st = JSON.parse(txt);
       if(!Array.isArray(st.comps) || !Array.isArray(st.lines)) throw 0;
       pushHistory(); state = migrateState(st); sel = null; afterChange();
-    }catch(err){ alert('Nem sikerült beolvasni: nem érvényes tervrajz fájl.'); }
+      closeDlg(); uiToast('Rajz betöltve: '+(state.title||''));
+    }catch(err){ uiToast('Nem sikerült beolvasni: nem érvényes tervrajz fájl.'); }
     e.target.value = '';
   });
 };
@@ -1585,10 +1752,12 @@ $('pngBtn').onclick = () => {
 };
 $('printBtn').onclick = () => { zoomFit(); setTimeout(()=>window.print(), 100); };
 $('newBtn').onclick = () => {
-  if(!confirm('Biztosan új, üres rajzot kezdesz? A mostani a böngészőből törlődik (a mentett fájlok megmaradnak).')) return;
-  pushHistory();
-  state = { title:'Névtelen tervrajz', nextId:1, scale:1, comps:[], lines:[], texts:[] };
-  sel = null; afterChange();
+  uiConfirm('Biztosan új, üres rajzot kezdesz? A mostani vászon törlődik (a mentett rajzok megmaradnak).', () => {
+    pushHistory();
+    state = { title:'Névtelen tervrajz', nextId:1, scale:1, comps:[], lines:[], texts:[] };
+    sel = null; afterChange();
+    uiToast('Új, üres rajz.');
+  });
 };
 
 /* ================= UI felépítés ================= */
@@ -1700,14 +1869,361 @@ $('bomCsv').onclick = () => download(fileBase()+'_anyaglista.csv',
   new Blob(['﻿'+bomCsv()], {type:'text/csv;charset=utf-8'}));
 $('bomCopy').onclick = () => {
   navigator.clipboard.writeText(bomCsv().replace(/;/g,'\t').replace(/"/g,'')).then(
-    () => setHint('Anyaglista a vágólapra másolva – beillesztheted táblázatba.'),
-    () => alert('A vágólapra másolás nem sikerült.'));
+    () => uiToast('Anyaglista a vágólapra másolva – beillesztheted táblázatba.'),
+    () => uiToast('A vágólapra másolás nem sikerült.'));
 };
 document.querySelectorAll('[data-close]').forEach(b =>
   b.addEventListener('click', () => $(b.dataset.close).classList.remove('open')));
 document.querySelectorAll('.modal').forEach(m =>
   m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); }));
 window.addEventListener('resize', applyView);
+
+/* ================= Demó / szimuláció ================= */
+/* Belső átjárás az elemeken: mely csonkok vannak összekötve az elem belsejében */
+const INTERNAL = {
+  kazan_kombi:[[0,4]], kazan_futo:[[0,4],[1,3]], szilard_kazan:[[0,1]],
+  hp_belteri:[[0,1]], hp_kulteri:[[0,1]], napkollektor:[[0,1]],
+  hmv:[[0,1],[2,3,4]], puffer:[[0,1,2,3]], hidr_valto:[[0,1,2,3]],
+  hocserelo:[[0,1],[2,3]], osztogyujto:[[0,2,3,4],[1,5,6,7]],
+  szolar_egyseg:[[0,2],[1,3]],
+  szivattyu:[[0,1]], cirk_szivattyu:[[0,1]], valtoszelep:[[0,1,2]], keveroszelep:[[0,1,2]],
+  term_kevero:[[0,1,2]], golyoscsap:[[0,1]], gazcsap:[[0,1]], visszacsapo:[[0,1]],
+  szuro:[[0,1]], iszaplevalaszto:[[0,1]], leglevalaszto:[[0,1]], tularam:[[0,1]],
+  vedett_szelep:[[0,1]], thv_szelep:[[0,1]], radiator:[[0,1]], padlofutes:[[0,1]],
+  fancoil:[[0,1]], gazora:[[0,1]], term_elfolyo:[[0,1]]
+};
+/* Hőtermelők: előremenő/visszatérő csonkjaik, van-e beépített szivattyú, tud-e hűteni */
+const SIM_SOURCES = {
+  kazan_kombi:[{sup:0, ret:4, pump:true}],
+  kazan_futo:[{sup:0, ret:4, pump:true}, {sup:1, ret:3, pump:true, stor:true}],
+  szilard_kazan:[{sup:0, ret:1, pump:false}],
+  hp_belteri:[{sup:0, ret:1, pump:true, cool:true}],
+  hp_kulteri:[{sup:0, ret:1, pump:false, cool:true}],
+  napkollektor:[{sup:1, ret:0, pump:false, solar:true}]
+};
+const SIM_HEATERS = {radiator:1, padlofutes:1, fancoil:1};
+
+function simBuildGraph(){
+  const lines = state.lines;
+  const par = lines.map((_, i) => i);
+  const find = i => par[i] === i ? i : (par[i] = find(par[i]));
+  const endTouches = (e, L) => {
+    for(let k=1;k<L.points.length;k++) if(distPtSeg(e.x, e.y, L.points[k-1], L.points[k]) < 5) return true;
+    return false;
+  };
+  for(let i=0;i<lines.length;i++) for(let j=i+1;j<lines.length;j++){
+    const A = lines[i], B = lines[j];
+    let conn = false;
+    for(const e of [A.points[0], A.points[A.points.length-1]]) if(endTouches(e, B)) conn = true;
+    for(const e of [B.points[0], B.points[B.points.length-1]]) if(endTouches(e, A)) conn = true;
+    if(conn) par[find(i)] = find(j);
+  }
+  const portCl = new Map(), clPorts = new Map();
+  for(const c of state.comps){
+    const s = SYMBOLS[c.type];
+    for(let idx=0; idx<s.ports.length; idx++){
+      const l = portConnLine(c, idx);
+      if(!l) continue;
+      const cl = find(lines.indexOf(l));
+      portCl.set(c.id+':'+idx, cl);
+      if(!clPorts.has(cl)) clPorts.set(cl, []);
+      clPorts.get(cl).push({comp:c, idx});
+    }
+  }
+  return {lines, find, portCl, clPorts};
+}
+function simTraceLoop(g, src, def){
+  const startCl = g.portCl.get(src.id+':'+def.sup);
+  const endCl = g.portCl.get(src.id+':'+def.ret);
+  if(startCl === undefined) return null;
+  const visited = new Set([startCl]);
+  const entries = new Map([[startCl, portWorld(src, def.sup)]]);
+  const order = [startCl], q = [startCl], comps = new Map();
+  while(q.length){
+    const cl = q.shift();
+    for(const {comp, idx} of (g.clPorts.get(cl) || [])){
+      if(comp.id === src.id) continue;
+      comps.set(comp.id, comp);
+      for(const grp of (INTERNAL[comp.type] || [])){
+        if(grp.indexOf(idx) === -1) continue;
+        for(const other of grp){
+          if(other === idx) continue;
+          const ncl = g.portCl.get(comp.id+':'+other);
+          if(ncl === undefined || visited.has(ncl)) continue;
+          visited.add(ncl); order.push(ncl);
+          entries.set(ncl, portWorld(comp, other));
+          q.push(ncl);
+        }
+      }
+    }
+  }
+  return { ok: endCl !== undefined && visited.has(endCl),
+           order, entries, comps:[...comps.values()] };
+}
+function simOrientCluster(g, cl, entry){
+  const idxs = [];
+  for(let i=0;i<g.lines.length;i++) if(g.find(i) === cl) idxs.push(i);
+  const res = new Map(), q = [];
+  const d2 = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+  const onLine = (p, l) => {
+    for(let k=1;k<l.points.length;k++) if(distPtSeg(p.x, p.y, l.points[k-1], l.points[k]) < 5) return true;
+    return false;
+  };
+  for(const i of idxs){
+    const l = g.lines[i];
+    if(onLine(entry, l) || l.points.some(p => d2(p, entry) < 6)){
+      res.set(i, d2(entry, l.points[0]) <= d2(entry, l.points[l.points.length-1]));
+      q.push(i);
+    }
+  }
+  while(q.length){
+    const i = q.shift(); const l = g.lines[i];
+    const exit = res.get(i) ? l.points[l.points.length-1] : l.points[0];
+    for(const j of idxs){
+      if(res.has(j)) continue;
+      const m = g.lines[j];
+      let fromPt = null;
+      const m0 = m.points[0], mN = m.points[m.points.length-1];
+      if(d2(m0, exit) < 6 || onLine(m0, l)) fromPt = m0;
+      else if(d2(mN, exit) < 6 || onLine(mN, l)) fromPt = mN;
+      else if(onLine(exit, m)) fromPt = exit;
+      if(!fromPt) continue;
+      res.set(j, d2(fromPt, m0) <= d2(fromPt, mN));
+      q.push(j);
+    }
+  }
+  for(const i of idxs) if(!res.has(i)) res.set(i, true);
+  return res;
+}
+function compHaloRect(c, color){
+  const s = SYMBOLS[c.type];
+  return '<rect class="halo" x="'+(c.x-8)+'" y="'+(c.y-8)+'" width="'+(s.w+16)+'" height="'+(s.h+16)+
+    '" rx="10" fill="'+color+'"/>';
+}
+
+function startSim(){
+  if(SIM.on) return;
+  if(draw){ draw = null; }
+  setMode('select'); sel = null; render();
+  const g = simBuildGraph();
+  const loops = [], issues = [];
+  const sources = state.comps.filter(c => SIM_SOURCES[c.type]);
+  if(!sources.length) issues.push({t:'err', m:'Nincs hőtermelő a rajzon (kazán, hőszivattyú…) – nincs mit elindítani.'});
+  for(const src of sources){
+    for(const def of SIM_SOURCES[src.type]){
+      const tr = simTraceLoop(g, src, def);
+      if(!tr){
+        if(!def.stor) issues.push({t:'err', m:esc(src.label)+': az előremenő csonkja nincs bekötve.'});
+        continue;
+      }
+      const consumers = tr.comps.filter(c => SIM_HEATERS[c.type] || c.type === 'hmv' || c.type === 'puffer');
+      const pumps = tr.comps.filter(c => c.type === 'szivattyu' || c.type === 'cirk_szivattyu' || c.type === 'szolar_egyseg');
+      const loop = { src, def, tr, consumers, pumps, active:false,
+        flow: [] };
+      if(!tr.ok){
+        issues.push({t:'err', m:esc(src.label)+': a kör nincs zárva – az előremenő nem ér vissza a visszatérő csonkra.'});
+      } else {
+        if(!consumers.length && !def.stor)
+          issues.push({t:'warn', m:esc(src.label)+': a körben nincs hőleadó (radiátor, padlófűtés, fan-coil…).'});
+        if(!def.pump && !pumps.length)
+          issues.push({t:'err', m:esc(src.label)+': hiányzik a keringető szivattyú a körből!'});
+        const all = tr.comps;
+        if(!all.some(c => c.type === 'biztonsagi'))
+          issues.push({t:'warn', m:esc(src.label)+' köréből hiányzik a biztonsági szelep!'});
+        if(!all.some(c => c.type === 'tagulasi'))
+          issues.push({t:'warn', m:esc(src.label)+' köréből hiányzik a tágulási tartály!'});
+        // áramlási irányok előszámítása
+        for(const cl of tr.order){
+          const dirs = simOrientCluster(g, cl, tr.entries.get(cl));
+          for(const [li, fwd] of dirs){
+            const l = g.lines[li];
+            loop.flow.push({ pts:l.points.map(p=>p.x+','+p.y).join(' '), fwd, w:Math.max(2, l.width-1) });
+          }
+        }
+        loops.push(loop);
+      }
+      // gázkazán: gázcsonk
+      if((src.type === 'kazan_kombi' || src.type === 'kazan_futo') && !def.stor && !portConnLine(src, 2))
+        issues.push({t:'warn', m:esc(src.label)+': a gázcsonk nincs bekötve.'});
+    }
+  }
+  // termosztátok, helyiségek
+  const thermos = state.comps.filter(c => c.type === 'termosztat');
+  const rooms = new Map();
+  const roomFor = c => {
+    if(!thermos.length) return '_global';
+    let best = null, bd = 1e18;
+    for(const t of thermos){
+      const d = Math.hypot(t.x-c.x, t.y-c.y);
+      if(d < bd){ bd = d; best = t; }
+    }
+    return best.id;
+  };
+  if(thermos.length) for(const t of thermos) rooms.set(t.id, {name:t.label, set:22, temp:19.5, heaters:[]});
+  else rooms.set('_global', {name:'Helyiség (nincs termosztát)', set:22, temp:19.5, heaters:[]});
+  for(const loop of loops) for(const c of loop.consumers)
+    if(SIM_HEATERS[c.type]) rooms.get(roomFor(c)).heaters.push({comp:c, loop});
+  // HMV tárolók
+  const tanks = new Map();
+  for(const c of state.comps.filter(c => c.type === 'hmv')){
+    tanks.set(c.id, {name:c.label, set:45, temp:38, heat:false, comp:c});
+    if(!portConnLine(c, 4)) issues.push({t:'warn', m:esc(c.label)+': a hidegvíz csonk nincs bekötve.'});
+    const feeds = loops.some(l => l.consumers.some(x => x.id === c.id));
+    if(!feeds) issues.push({t:'warn', m:esc(c.label)+': egyik fűtőkör sem fűti (a csőkígyó nincs hőtermelőre kötve).'});
+  }
+  // ismétlődő üzenetek szűrése
+  const seen = new Set();
+  const uniq = issues.filter(i => !seen.has(i.m) && seen.add(i.m));
+  issues.length = 0; issues.push(...uniq);
+  if(!issues.length) issues.push({t:'ok', m:'A rendszer hibátlannak tűnik – jó demózást!'});
+  SIM = { on:true, mode:'futes', outdoor:2, speed:1, g, loops, issues, rooms, tanks, timer:null };
+  document.body.classList.add('simming');
+  $('simBtn').textContent = '⏹ Demó vége';
+  buildSimPanel();
+  SIM.timer = setInterval(simTick, 700);
+  simTick();
+  setHint('Demó mód: állítsd a termosztátokat és a külső hőmérsékletet a jobb oldali panelen. Esc: kilépés.');
+}
+function stopSim(){
+  if(!SIM.on) return;
+  clearInterval(SIM.timer);
+  SIM = { on:false };
+  gFlow.innerHTML = '';
+  document.body.classList.remove('simming');
+  $('simBtn').textContent = '▶ Demó';
+  setHint();
+}
+function buildSimPanel(){
+  let h = '<h4>Rendszer demó</h4>';
+  h += '<div class="modebtns"><button data-mode="futes" class="on">🔥 Fűtés</button>' +
+       '<button data-mode="hutes">❄ Hűtés</button></div>';
+  h += '<div class="grp"><div class="gt">Környezet</div>' +
+    '<label>Külső hőmérséklet <span class="val" id="spOutV">'+SIM.outdoor+' °C</span></label>' +
+    '<input type="range" id="spOut" min="-15" max="40" step="1" value="'+SIM.outdoor+'">' +
+    '<label>Sebesség <span class="val" id="spSpV">'+SIM.speed+'×</span></label>' +
+    '<input type="range" id="spSp" min="1" max="5" step="1" value="'+SIM.speed+'"></div>';
+  h += '<div class="grp"><div class="gt">Termosztátok</div>';
+  for(const [id, r] of SIM.rooms){
+    h += '<label>'+esc(r.name)+' <span class="val"><span id="rt_'+id+'">'+r.temp.toFixed(1)+
+      '</span> → <span id="rs_'+id+'">'+r.set+'</span> °C</span></label>' +
+      '<input type="range" data-room="'+id+'" min="15" max="28" step="0.5" value="'+r.set+'">';
+    if(!r.heaters.length) h += '<div class="iss warn">Ehhez a termosztáthoz nem tartozik működő fűtési kör.</div>';
+  }
+  h += '</div>';
+  if(SIM.tanks.size){
+    h += '<div class="grp"><div class="gt">HMV tárolók</div>';
+    for(const [id, t] of SIM.tanks){
+      h += '<label>'+esc(t.name)+' <span class="val"><span id="tt_'+id+'">'+t.temp.toFixed(1)+
+        '</span> → <span id="ts_'+id+'">'+t.set+'</span> °C</span></label>' +
+        '<input type="range" data-tank="'+id+'" min="35" max="60" step="1" value="'+t.set+'">';
+    }
+    h += '</div>';
+  }
+  h += '<div class="grp"><div class="gt">Állapot</div><div id="spState"></div></div>';
+  h += '<div class="grp"><div class="gt">Ellenőrzés</div>' +
+    SIM.issues.map(i => '<div class="iss '+i.t+'">'+i.m+'</div>').join('') + '</div>';
+  h += '<button class="stop" id="spStop">⏹ Demó leállítása</button>';
+  $('simPanel').innerHTML = h;
+}
+function simTick(){
+  if(!SIM.on) return;
+  const cooling = SIM.mode === 'hutes';
+  // igények
+  for(const [, r] of SIM.rooms){
+    r.demand = cooling ? r.temp > r.set + 0.3 : r.temp < r.set - 0.3;
+    r.running = false;
+  }
+  for(const [, t] of SIM.tanks){
+    if(t.temp < t.set - 1.5) t.heat = true;
+    if(t.temp > t.set + 1) t.heat = false;
+  }
+  // körök aktiválása
+  for(const loop of SIM.loops){
+    const srcDef = SIM_SOURCES[loop.src.type].find(d => d === loop.def);
+    let active = false;
+    const coolCapable = !!loop.def.cool;
+    if(cooling && !coolCapable){ loop.active = false; continue; }
+    for(const c of loop.consumers){
+      if(SIM_HEATERS[c.type]){
+        for(const [, r] of SIM.rooms)
+          if(r.heaters.some(hh => hh.comp.id === c.id) && r.demand){
+            if(!cooling || c.type === 'fancoil'){ active = true; r.running = true; }
+          }
+      }
+      if(c.type === 'hmv' && !cooling){
+        const t = SIM.tanks.get(c.id);
+        if(t && t.heat) active = true;
+      }
+      if(c.type === 'puffer' && loop.def.solar) active = SIM.outdoor > 5;
+    }
+    if(loop.def.solar) active = SIM.outdoor > 5 && loop.consumers.length > 0;
+    loop.active = active;
+  }
+  // hőmérsékletek léptetése
+  for(const [, r] of SIM.rooms){
+    if(r.running) r.temp += (cooling ? -0.14 : 0.14) * SIM.speed;
+    r.temp += (SIM.outdoor - r.temp) * 0.006 * SIM.speed;
+    r.temp = Math.max(-10, Math.min(45, r.temp));
+  }
+  for(const [id, t] of SIM.tanks){
+    const feeding = SIM.loops.some(l => l.active && l.consumers.some(c => c.id === id));
+    t.temp += feeding ? 0.5 * SIM.speed : -0.05 * SIM.speed;
+    t.temp = Math.max(10, Math.min(70, t.temp));
+  }
+  // áramlás kirajzolása
+  const col = cooling ? 'rgba(210,238,255,.95)' : 'rgba(255,255,255,.9)';
+  let f = '';
+  for(const loop of SIM.loops){
+    if(!loop.active) continue;
+    f += compHaloRect(loop.src, cooling ? 'rgba(64,150,238,.4)' : 'rgba(226,87,76,.4)');
+    for(const c of loop.consumers){
+      const heats = SIM_HEATERS[c.type] || c.type === 'hmv';
+      if(heats) f += compHaloRect(c, cooling ? 'rgba(64,150,238,.25)' : 'rgba(226,87,76,.25)');
+    }
+    for(const fl of loop.flow)
+      f += '<polyline points="'+fl.pts+'" fill="none" stroke="'+col+'" stroke-width="'+fl.w+
+        '" stroke-dasharray="8 8" stroke-linecap="round" class="'+(fl.fwd?'flowF':'flowR')+'"/>';
+  }
+  gFlow.innerHTML = f;
+  // panel frissítése
+  for(const [id, r] of SIM.rooms){
+    const e1 = $('rt_'+id), e2 = $('rs_'+id);
+    if(e1) e1.textContent = r.temp.toFixed(1);
+    if(e2) e2.textContent = r.set;
+  }
+  for(const [id, t] of SIM.tanks){
+    const e1 = $('tt_'+id), e2 = $('ts_'+id);
+    if(e1) e1.textContent = t.temp.toFixed(1);
+    if(e2) e2.textContent = t.set;
+  }
+  const act = SIM.loops.filter(l => l.active);
+  const stEl = $('spState');
+  if(stEl){
+    stEl.innerHTML = act.length
+      ? act.map(l => '<div class="iss ok">'+(cooling?'❄':'🔥')+' '+esc(l.src.label)+' köre üzemel'+
+          (l.consumers.length ? ' → '+esc(l.consumers.map(c=>c.label).join(', ')) : '')+'</div>').join('')
+      : '<div class="iss warn">Minden kör tétlen – növeld a termosztát hőfokát (fűtés) vagy csökkentsd (hűtés).</div>';
+  }
+}
+$('simBtn').onclick = () => SIM.on ? stopSim() : startSim();
+$('simPanel').addEventListener('input', e => {
+  const t = e.target;
+  if(t.id === 'spOut'){ SIM.outdoor = +t.value; $('spOutV').textContent = t.value+' °C'; }
+  if(t.id === 'spSp'){ SIM.speed = +t.value; $('spSpV').textContent = t.value+'×'; }
+  if(t.dataset.room){ const r = SIM.rooms.get(t.dataset.room); if(r) r.set = +t.value; }
+  if(t.dataset.tank){ const k = SIM.tanks.get(t.dataset.tank); if(k) k.set = +t.value; }
+  simTick();
+});
+$('simPanel').addEventListener('click', e => {
+  const mb = e.target.closest('[data-mode]');
+  if(mb){
+    SIM.mode = mb.dataset.mode;
+    document.querySelectorAll('#simPanel [data-mode]').forEach(b =>
+      b.classList.toggle('on', b === mb));
+    simTick(); return;
+  }
+  if(e.target.closest('#spStop')) stopSim();
+});
 
 /* ================= Indulás ================= */
 function migrateState(st){
