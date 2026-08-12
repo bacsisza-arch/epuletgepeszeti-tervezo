@@ -218,6 +218,26 @@
   #simPanel .modebtns button.on{background:var(--accent); color:#fff; border-color:var(--accent)}
   #simPanel .stop{width:100%; margin-top:10px; padding:9px; border-radius:8px; font-weight:700;
     background:var(--danger); color:#fff}
+  #boom{
+    position:fixed; inset:0; background:rgba(4,7,11,.9); display:none;
+    align-items:center; justify-content:center; z-index:100; text-align:center;
+  }
+  #boom.open{display:flex}
+  #boom .b{color:#fff; max-width:480px; padding:24px}
+  #boom .em{font-size:96px; line-height:1; animation:boomP .6s ease-out}
+  @keyframes boomP{ 0%{transform:scale(.2); opacity:0} 60%{transform:scale(1.5)} 100%{transform:scale(1)} }
+  #boom h2{color:#ff6b5e; font-size:28px; margin:14px 0 8px; letter-spacing:.04em}
+  #boom p{color:#ccd6e0; font-size:15px; line-height:1.65; margin:8px 0}
+  #boom button{
+    margin-top:20px; padding:12px 28px; border-radius:10px; background:#ff6b5e;
+    color:#fff; font-weight:700; font-size:15px;
+  }
+  @keyframes shake{
+    0%,100%{transform:translate(0,0)} 20%{transform:translate(-9px,5px)}
+    40%{transform:translate(8px,-6px)} 60%{transform:translate(-6px,-5px)} 80%{transform:translate(7px,6px)}
+  }
+  body.quake #canvasWrap{animation:shake .45s linear 3}
+  @media (prefers-reduced-motion: reduce){ body.quake #canvasWrap, #boom .em{animation:none} }
   @keyframes flowdash{ to{ stroke-dashoffset:-64 } }
   .flowF{ animation:flowdash 1.1s linear infinite }
   .flowR{ animation:flowdash 1.1s linear infinite reverse }
@@ -386,6 +406,15 @@
   </div>
 </div>
 <div id="toast" role="status"></div>
+
+<div id="boom" role="alertdialog" aria-modal="true">
+  <div class="b">
+    <div class="em">💥</div>
+    <h2>BUMM!</h2>
+    <p id="boomTxt"></p>
+    <button id="boomBtn">Rendben, kijavítom…</button>
+  </div>
+</div>
 
 <div id="bom" class="modal" role="dialog" aria-modal="true" aria-label="Anyaglista">
   <div class="card">
@@ -2072,11 +2101,40 @@ function startSim(){
   else rooms.set('_global', {name:'Helyiség (nincs termosztát)', set:22, temp:19.5, heaters:[]});
   for(const loop of loops) for(const c of loop.consumers)
     if(SIM_HEATERS[c.type]) rooms.get(roomFor(c)).heaters.push({comp:c, loop});
-  // HMV tárolók
+  // kazánok hőfok-modellje (védettség: biztonsági szelep ÉS tágulási a rendszerében)
+  const boilers = new Map();
+  for(const src of sources){
+    if(['kazan_kombi','kazan_futo','szilard_kazan','hp_belteri'].indexOf(src.type) === -1) continue;
+    if(!loops.some(l => l.src.id === src.id)) continue;
+    const sys = [];
+    for(const l of loops) if(l.src.id === src.id) sys.push(...l.tr.comps);
+    const prot = sys.some(c => c.type === 'biztonsagi') && sys.some(c => c.type === 'tagulasi');
+    boilers.set(src.id, {name:src.label, comp:src, temp:60, protected:prot});
+  }
+  // HMV tárolók + vízoldali (szekunder) védelem
   const tanks = new Map();
   for(const c of state.comps.filter(c => c.type === 'hmv')){
-    tanks.set(c.id, {name:c.label, set:45, temp:38, heat:false, comp:c});
-    if(!portConnLine(c, 4)) issues.push({t:'warn', m:esc(c.label)+': a hidegvíz csonk nincs bekötve.'});
+    const t = {name:c.label, set:45, temp:38, heat:false, venting:false, comp:c,
+               wSafety:false, wCheck:false, wExp:false};
+    tanks.set(c.id, t);
+    const hvConn = !!portConnLine(c, 4);
+    if(!hvConn) issues.push({t:'warn', m:esc(c.label)+': a hidegvíz csonk nincs bekötve.'});
+    if(!portConnLine(c, 2)) issues.push({t:'warn', m:esc(c.label)+': a melegvíz csonk nincs bekötve.'});
+    // a vízoldali hálózat elemei (HV + MV + cirkuláció ágak)
+    const wset = new Map();
+    for(const pi of [2,3,4]){
+      const tr2 = simTraceLoop(g, c, {sup:pi, ret:pi});
+      if(tr2) tr2.comps.forEach(x => wset.set(x.id, x));
+    }
+    const wc = [...wset.values()];
+    t.wSafety = wc.some(x => x.type === 'biztonsagi');
+    t.wCheck  = wc.some(x => x.type === 'visszacsapo');
+    t.wExp    = wc.some(x => x.type === 'tagulasi');
+    if(hvConn){
+      if(!t.wSafety) issues.push({t:'warn', m:esc(c.label)+': a hidegvíz ágból hiányzik a biztonsági szelep – túlfűtésnél a tároló felrobbanhat!'});
+      if(!t.wCheck)  issues.push({t:'warn', m:esc(c.label)+': a hidegvíz ágból hiányzik a visszacsapó szelep!'});
+      if(!t.wExp)    issues.push({t:'warn', m:esc(c.label)+': hiányzik a HMV tágulási tartály a vízoldalról!'});
+    }
     const feeds = loops.some(l => l.consumers.some(x => x.id === c.id));
     if(!feeds) issues.push({t:'warn', m:esc(c.label)+': egyik fűtőkör sem fűti (a csőkígyó nincs hőtermelőre kötve).'});
   }
@@ -2085,7 +2143,7 @@ function startSim(){
   const uniq = issues.filter(i => !seen.has(i.m) && seen.add(i.m));
   issues.length = 0; issues.push(...uniq);
   if(!issues.length) issues.push({t:'ok', m:'A rendszer hibátlannak tűnik – jó demózást!'});
-  SIM = { on:true, mode:'futes', outdoor:2, speed:1, g, loops, issues, rooms, tanks, timer:null };
+  SIM = { on:true, mode:'futes', outdoor:2, speed:1, g, loops, issues, rooms, tanks, boilers, boom:false, timer:null };
   document.body.classList.add('simming');
   $('simBtn').textContent = '⏹ Demó vége';
   buildSimPanel();
@@ -2096,12 +2154,26 @@ function startSim(){
 function stopSim(){
   if(!SIM.on) return;
   clearInterval(SIM.timer);
+  $('boom').classList.remove('open');
   SIM = { on:false };
   gFlow.innerHTML = '';
   document.body.classList.remove('simming');
   $('simBtn').textContent = '▶ Demó';
   setHint();
 }
+function explode(comp, reason){
+  SIM.boom = true;
+  clearInterval(SIM.timer);
+  const sy = SYMBOLS[comp.type];
+  gFlow.innerHTML += '<text x="'+(comp.x+sy.w/2)+'" y="'+(comp.y+sy.h/2+25)+
+    '" font-size="90" text-anchor="middle">\uD83D\uDCA5</text>';
+  document.body.classList.add('quake');
+  setTimeout(() => document.body.classList.remove('quake'), 1500);
+  $('boomTxt').innerHTML = 'Felrobbantottad a(z) <b>'+esc(comp.label)+'</b> berendezést! '+reason+
+    '<br><br>Legközelebb jobban figyelj oda – az Ellenőrzés lista előre szólt. \uD83D\uDE09';
+  setTimeout(() => $('boom').classList.add('open'), 600);
+}
+$('boomBtn').onclick = () => { $('boom').classList.remove('open'); stopSim(); };
 function buildSimPanel(){
   let h = '<h4>Rendszer demó</h4>';
   h += '<div class="modebtns"><button data-mode="futes" class="on">🔥 Fűtés</button>' +
@@ -2124,7 +2196,7 @@ function buildSimPanel(){
     for(const [id, t] of SIM.tanks){
       h += '<label>'+esc(t.name)+' <span class="val"><span id="tt_'+id+'">'+t.temp.toFixed(1)+
         '</span> → <span id="ts_'+id+'">'+t.set+'</span> °C</span></label>' +
-        '<input type="range" data-tank="'+id+'" min="35" max="60" step="1" value="'+t.set+'">';
+        '<input type="range" data-tank="'+id+'" min="35" max="120" step="1" value="'+t.set+'">';
     }
     h += '</div>';
   }
@@ -2176,8 +2248,25 @@ function simTick(){
   }
   for(const [id, t] of SIM.tanks){
     const feeding = SIM.loops.some(l => l.active && l.consumers.some(c => c.id === id));
-    t.temp += feeding ? 0.5 * SIM.speed : -0.05 * SIM.speed;
-    t.temp = Math.max(10, Math.min(70, t.temp));
+    t.temp += feeding ? 0.7 * SIM.speed : -0.05 * SIM.speed;
+    t.venting = false;
+    if(t.wSafety && t.temp > 98){ t.temp = 98; if(feeding) t.venting = true; }
+    if(!t.wSafety && t.temp >= 110 && !SIM.boom){
+      explode(t.comp, 'Hiányzott a <b>biztonsági szelep</b>'+(t.wExp ? '' : ' és a <b>HMV tágulási tartály</b>')+
+        ' a hidegvíz ágból, a tároló pedig túlfűtött.');
+      return;
+    }
+    t.temp = Math.max(10, Math.min(115, t.temp));
+  }
+  // kazánok hőfoka: védelem nélkül elszáll
+  for(const [id, b] of SIM.boilers){
+    const running = SIM.loops.some(l => l.src.id === id && l.active);
+    if(running) b.temp += (b.protected ? (b.temp < 80 ? 0.8 : 0) : 0.6) * SIM.speed;
+    else b.temp += (60 - b.temp) * 0.05 * SIM.speed;
+    if(!b.protected && b.temp >= 110 && !SIM.boom){
+      explode(b.comp, 'A fűtési körből hiányzott a <b>biztonsági szelep</b> vagy a <b>tágulási tartály</b>, a kazán pedig túlfűtött.');
+      return;
+    }
   }
   // áramlás kirajzolása
   const col = cooling ? 'rgba(210,238,255,.95)' : 'rgba(255,255,255,.9)';
@@ -2193,6 +2282,11 @@ function simTick(){
       f += '<polyline points="'+fl.pts+'" fill="none" stroke="'+col+'" stroke-width="'+fl.w+
         '" stroke-dasharray="8 8" stroke-linecap="round" class="'+(fl.fwd?'flowF':'flowR')+'"/>';
   }
+  // vészhelyzet: sötétvörös, lüktető jelölés
+  for(const [, t] of SIM.tanks)
+    if(!t.wSafety && t.temp > 95) f += compHaloRect(t.comp, 'rgba(200,30,15,.55)');
+  for(const [, b] of SIM.boilers)
+    if(!b.protected && b.temp > 90) f += compHaloRect(b.comp, 'rgba(200,30,15,.55)');
   gFlow.innerHTML = f;
   // panel frissítése
   for(const [id, r] of SIM.rooms){
@@ -2208,10 +2302,17 @@ function simTick(){
   const act = SIM.loops.filter(l => l.active);
   const stEl = $('spState');
   if(stEl){
-    stEl.innerHTML = act.length
+    let sh = act.length
       ? act.map(l => '<div class="iss ok">'+(cooling?'❄':'🔥')+' '+esc(l.src.label)+' köre üzemel'+
           (l.consumers.length ? ' → '+esc(l.consumers.map(c=>c.label).join(', ')) : '')+'</div>').join('')
       : '<div class="iss warn">Minden kör tétlen – növeld a termosztát hőfokát (fűtés) vagy csökkentsd (hűtés).</div>';
+    for(const [, t] of SIM.tanks){
+      if(t.venting) sh += '<div class="iss warn">⚠ '+esc(t.name)+': a biztonsági szelep lefúj!</div>';
+      if(!t.wSafety && t.temp > 95) sh += '<div class="iss err">🔥 '+esc(t.name)+' túlnyomás alatt ('+t.temp.toFixed(0)+' °C) – mindjárt robban!</div>';
+    }
+    for(const [, b] of SIM.boilers)
+      if(!b.protected && b.temp > 90) sh += '<div class="iss err">🔥 '+esc(b.name)+' túlmelegedett ('+b.temp.toFixed(0)+' °C) – mindjárt robban!</div>';
+    stEl.innerHTML = sh;
   }
 }
 $('simBtn').onclick = () => SIM.on ? stopSim() : startSim();
