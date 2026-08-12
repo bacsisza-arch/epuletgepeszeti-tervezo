@@ -1890,7 +1890,7 @@ const INTERNAL = {
   term_kevero:[[0,1,2]], golyoscsap:[[0,1]], gazcsap:[[0,1]], visszacsapo:[[0,1]],
   szuro:[[0,1]], iszaplevalaszto:[[0,1]], leglevalaszto:[[0,1]], tularam:[[0,1]],
   vedett_szelep:[[0,1]], thv_szelep:[[0,1]], radiator:[[0,1]], padlofutes:[[0,1]],
-  fancoil:[[0,1]], gazora:[[0,1]], term_elfolyo:[[0,1]]
+  fancoil:[[0,1]], gazora:[[0,1]], term_elfolyo:[[0,1]], biztonsagi:[[0,1]]
 };
 /* Hőtermelők: előremenő/visszatérő csonkjaik, van-e beépített szivattyú, tud-e hűteni */
 const SIM_SOURCES = {
@@ -2010,28 +2010,29 @@ function startSim(){
   const sources = state.comps.filter(c => SIM_SOURCES[c.type]);
   if(!sources.length) issues.push({t:'err', m:'Nincs hőtermelő a rajzon (kazán, hőszivattyú…) – nincs mit elindítani.'});
   for(const src of sources){
+    const touched = new Map();
+    let anyOk = false;
     for(const def of SIM_SOURCES[src.type]){
       const tr = simTraceLoop(g, src, def);
       if(!tr){
         if(!def.stor) issues.push({t:'err', m:esc(src.label)+': az előremenő csonkja nincs bekötve.'});
         continue;
       }
+      tr.comps.forEach(c => touched.set(c.id, c));
       const consumers = tr.comps.filter(c => SIM_HEATERS[c.type] || c.type === 'hmv' || c.type === 'puffer');
       const pumps = tr.comps.filter(c => c.type === 'szivattyu' || c.type === 'cirk_szivattyu' || c.type === 'szolar_egyseg');
-      const loop = { src, def, tr, consumers, pumps, active:false,
-        flow: [] };
+      const loop = { src, def, tr, consumers, pumps, active:false, flow: [] };
       if(!tr.ok){
-        issues.push({t:'err', m:esc(src.label)+': a kör nincs zárva – az előremenő nem ér vissza a visszatérő csonkra.'});
+        const retConn = g.portCl.get(src.id+':'+def.ret) !== undefined;
+        issues.push({t:'err', m: esc(src.label) + (retConn
+          ? ': a kör nincs zárva – az előremenő nem ér vissza a visszatérő csonkra.'
+          : (def.stor ? ': a tároló-visszatérő csonk nincs bekötve.' : ': a visszatérő csonk nincs bekötve.'))});
       } else {
+        anyOk = true;
         if(!consumers.length && !def.stor)
           issues.push({t:'warn', m:esc(src.label)+': a körben nincs hőleadó (radiátor, padlófűtés, fan-coil…).'});
         if(!def.pump && !pumps.length)
           issues.push({t:'err', m:esc(src.label)+': hiányzik a keringető szivattyú a körből!'});
-        const all = tr.comps;
-        if(!all.some(c => c.type === 'biztonsagi'))
-          issues.push({t:'warn', m:esc(src.label)+' köréből hiányzik a biztonsági szelep!'});
-        if(!all.some(c => c.type === 'tagulasi'))
-          issues.push({t:'warn', m:esc(src.label)+' köréből hiányzik a tágulási tartály!'});
         // áramlási irányok előszámítása
         for(const cl of tr.order){
           const dirs = simOrientCluster(g, cl, tr.entries.get(cl));
@@ -2045,6 +2046,14 @@ function startSim(){
       // gázkazán: gázcsonk
       if((src.type === 'kazan_kombi' || src.type === 'kazan_futo') && !def.stor && !portConnLine(src, 2))
         issues.push({t:'warn', m:esc(src.label)+': a gázcsonk nincs bekötve.'});
+    }
+    // biztonsági szerelvények: a hőtermelő ÖSSZES körét együtt nézzük
+    if(anyOk && ['kazan_kombi','kazan_futo','szilard_kazan','hp_belteri'].indexOf(src.type) !== -1){
+      const all = [...touched.values()];
+      if(!all.some(c => c.type === 'biztonsagi'))
+        issues.push({t:'warn', m:esc(src.label)+' rendszeréből hiányzik a biztonsági szelep!'});
+      if(!all.some(c => c.type === 'tagulasi'))
+        issues.push({t:'warn', m:esc(src.label)+' rendszeréből hiányzik a tágulási tartály!'});
     }
   }
   // termosztátok, helyiségek
